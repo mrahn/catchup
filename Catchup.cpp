@@ -17,6 +17,11 @@ namespace
     int y (point const& p) { return std::get<1> (p); }
     int z (point const& p) { return std::get<2> (p); }
 
+    int plane_size (int size)
+    {
+      return 3 * size * (size - 1) + std::min (1, size);
+    }
+
     std::vector<point> plane (int size)
     {
       std::vector<point> p;
@@ -130,9 +135,9 @@ namespace
         return m;
       }
 
-      std::vector<std::vector<int>> neighbours
-        (std::vector<point::point> const& points)
+      std::vector<std::vector<int>> neighbours (int size)
       {
+        std::vector<point::point> const points (point::plane (size));
         std::map<point::point, int> const id_by_point (numbered (points));
         std::vector<std::vector<int>> ns (points.size());
         int k (0);
@@ -175,10 +180,9 @@ namespace
         , _to_move (player::Blue)
         , _high_water (0)
         , _increased_size_of_largest_group (false)
-        , _points (point::plane (_size))
-        , _neighbour (neighbours (_points))
-        , _free_fields (full (_points.size()))
-        , _stone (_points.size(), player::None)
+        , _neighbour (neighbours (_size))
+        , _free_fields (full (point::plane_size (_size)))
+        , _stone (point::plane_size (_size), player::None)
         , _taken (2)
       {}
 
@@ -208,7 +212,6 @@ namespace
       player::player _to_move;
       int _high_water;
       bool _increased_size_of_largest_group;
-      std::vector<point::point> const _points;
       std::vector<std::vector<int>> const _neighbour;
       std::unordered_set<int> _free_fields;
       std::vector<player::player> _stone;
@@ -224,7 +227,7 @@ namespace
       std::vector<int> sizes_of_components (std::vector<int> fields)
       {
         std::stack<int> stack;
-        std::vector<bool> seen (_points.size(), 0);
+        std::vector<bool> seen (point::plane_size (_size), 0);
         std::vector<int> sizes;
 
         for (int field : fields)
@@ -292,7 +295,7 @@ namespace
 
         print_prefix();
 
-        for (point::point const& p : _board._points)
+        for (point::point const& p : point::plane (_board._size))
         {
           int const x (point::x (p) + _board._size - 1);
 
