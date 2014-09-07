@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module Catchup (Catchup, catchup, result) where
+module Catchup (Catchup, catchup, result, mirror) where
 
 import qualified Util (join, select, unique)
 import qualified Player (Player (Blue, Orange), other)
@@ -11,7 +11,7 @@ import qualified Point2D (Point2D)
 import HexBoard (HexBoard)
 import qualified HexBoard
   ( empty, free_fields, stone, id_of_point2D, rotate60
-  , component_sizes, size_of_components
+  , component_sizes, size_of_components, mirror
   )
 import qualified Data.Map (Map, empty, insert, lookup)
 import qualified Data.Set (toList)
@@ -68,6 +68,9 @@ catchup_rotate60 c = c { board = HexBoard.rotate60 $ board c }
 
 rotations :: Catchup -> [Catchup]
 rotations = take 6 . iterate catchup_rotate60
+
+mirror :: Int -> Catchup -> Catchup
+mirror k c = c { board = HexBoard.mirror k $ board c }
 
 normal :: Catchup -> Catchup
 normal = minimum . rotations
