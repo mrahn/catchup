@@ -58,6 +58,19 @@ neighbouring n =
 
 ------------------------------------------------------------------------------
 
+app :: (Int -> Int) -> HexPoint -> HexPoint
+app f (HexPoint a b c) = HexPoint (f a) (f b) (f c)
+
+hex_point_rotate60 :: HexPoint -> HexPoint
+hex_point_rotate60 (HexPoint x y z) = app (flip div 3)
+  $ HexPoint (2*x - y + 2*z) (2*x + 2*y - z) (-x + 2*y + 2*z)
+
+hex_point_rotate300 :: HexPoint -> HexPoint
+hex_point_rotate300 (HexPoint x y z) = app (flip div 3)
+  $ HexPoint (2*x + 2*y - z) (-x + 2*y + 2*z) (2*x - y + 2*z)
+
+------------------------------------------------------------------------------
+
 data Player = Blue | Orange deriving (Eq, Ord)
 
 other :: Player -> Player
