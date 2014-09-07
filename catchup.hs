@@ -7,7 +7,7 @@ import qualified Util (join, select, unique)
 import qualified HexPoint
   (fields, id_of_point, point_of_id, neighbouring, rotate60, rotate300)
 import qualified Player (Player (Blue, Orange), other)
-import Put (Put (put))
+import qualified Put (Put (put))
 import qualified Point2D (Point2D (Point2D), rectangluar, hexangular)
 
 import qualified Data.Bits (shiftL, (.&.), (.|.))
@@ -34,7 +34,7 @@ data HexBoard = HexBoard { size :: Int
 instance Eq HexBoard where x == y = stone x == stone y
 instance Ord HexBoard where  compare x y = compare (stone x) (stone y)
 
-instance Put (Player.Player, Int) HexBoard where
+instance Put.Put (Player.Player, Int) HexBoard where
   put (player, field) b =
     b { stone = Data.Map.insert field player (stone b)
       , taken = Data.Map.insertWith (++) player [field] (taken b)
@@ -70,8 +70,8 @@ hex_board_rotate60 b = b
 
 ------------------------------------------------------------------------------
 
-instance Put (Player.Player, Point2D.Point2D) HexBoard where
-  put (player, p) b = put (player, id_of_point2D b p) b
+instance Put.Put (Player.Player, Point2D.Point2D) HexBoard where
+  put (player, p) b = Put.put (player, id_of_point2D b p) b
 
 ------------------------------------------------------------------------------
 
@@ -150,7 +150,7 @@ instance Show Catchup where
                                   , show (available_stones c)
                                   ]
 
-instance Put [Int] Catchup where
+instance Put.Put [Int] Catchup where
   put fields c = Catchup { board = new_board
                          , to_move = Player.other (to_move c)
                          , high_water = max csize $ high_water c
@@ -159,15 +159,15 @@ instance Put [Int] Catchup where
                              then [1,2,3] else [1,2]
                          }
     where new_board = puts fields (board c)
-          puts (f:fs) b = puts fs (put (to_move c, f) b)
+          puts (f:fs) b = puts fs (Put.put (to_move c, f) b)
           puts [] b = b
           csize = maximum $ size_of_components (to_move c) new_board fields
 
-instance Put [Point2D.Point2D] Catchup where
-  put ps c = put (map (id_of_point2D (board c)) ps) c
+instance Put.Put [Point2D.Point2D] Catchup where
+  put ps c = Put.put (map (id_of_point2D (board c)) ps) c
 
-instance Put [String] Catchup where
-  put input = put (map read input :: [Point2D.Point2D])
+instance Put.Put [String] Catchup where
+  put input = Put.put (map read input :: [Point2D.Point2D])
 
 ------------------------------------------------------------------------------
 
@@ -186,7 +186,7 @@ suc :: Catchup -> [Catchup]
 suc c = Util.unique $ map normal $ concat [ sucN k c | k <- available_stones c ]
 
 sucN :: Int -> Catchup -> [Catchup]
-sucN k c = map (flip put c)
+sucN k c = map (flip Put.put c)
          $ Util.select k (Data.Set.toList $ free_fields $ board c)
 
 paths :: Catchup -> [[Catchup]]
@@ -243,7 +243,7 @@ read_lg_move n (c:xs) = Point2D.Point2D x (shift y)
         shift = (+) (min 0 (x - pred n))
 
 import_lg_game :: [[String]] -> Catchup
-import_lg_game = foldl (flip put) (catchup 5) . map (map (read_lg_move 5))
+import_lg_game = foldl (flip Put.put) (catchup 5) . map (map (read_lg_move 5))
 
 lg1657875 :: Catchup
 lg1657875 = import_lg_game moves
