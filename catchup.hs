@@ -3,11 +3,12 @@
 
 module Main (main) where
 
+import qualified Data.Bits (shiftL, (.&.), (.|.))
 import qualified Data.Char (chr, ord)
+import qualified Data.Int (Int64)
 import qualified Data.Map
    (Map, empty, insert, insertWith, lookup, (!), fromList, findWithDefault)
-import qualified Data.Set
-   (Set, empty, member, insert, fromList, toList, delete)
+import qualified Data.Set (Set, fromList, toList, delete)
 import qualified Data.List (groupBy, intersperse, sortBy)
 import qualified Control.Monad.State (State, get, modify, evalState)
 
@@ -88,6 +89,8 @@ instance Put (Player, Int) HexBoard where
       }
 
 empty_hex_board :: Int -> HexBoard
+empty_hex_board n | length (hex_fields n) > 64 =
+  error "Size to large. Traversal state has 64 bits only. Sorry."
 empty_hex_board n = HexBoard
   { size = n
   , stone = Data.Map.empty
@@ -146,36 +149,37 @@ instance Show HexBoard where
 
 ------------------------------------------------------------------------------
 
-eval_set :: Control.Monad.State.State (Data.Set.Set s) a -> a
-eval_set = flip Control.Monad.State.evalState Data.Set.empty
+eval_int64 :: Control.Monad.State.State Data.Int.Int64 a -> a
+eval_int64 = flip Control.Monad.State.evalState 0
 
 componentM :: Player -> HexBoard -> Int
-           -> Control.Monad.State.State (Data.Set.Set Int) Int
+           -> Control.Monad.State.State Data.Int.Int64 Int
 componentM player b field
   | Data.Map.lookup field (stone b) == Just player = do
     cache <- Control.Monad.State.get
-    case Data.Set.member field cache of
-      False -> do Control.Monad.State.modify (Data.Set.insert field)
+    let pos = Data.Bits.shiftL 1 field
+    case (pos Data.Bits..&. cache /= 0) of
+      False -> do Control.Monad.State.modify ((Data.Bits..|.) pos)
                   vs <- mapM (componentM player b) (neighbours b field)
                   return $ succ $ sum vs
       _ -> return 0
 componentM _ _ _ = return 0
 
 componentsM :: Player -> HexBoard -> [Int]
-            -> Control.Monad.State.State (Data.Set.Set Int) [Int]
+            -> Control.Monad.State.State Data.Int.Int64 [Int]
 componentsM player b = mapM (componentM player b)
 
 size_of_components :: Player -> HexBoard -> [Int] -> [Int]
-size_of_components player b fs = eval_set (componentsM player b fs)
+size_of_components player b fs = eval_int64 (componentsM player b fs)
 
 all_componentsM :: Player -> HexBoard
-                -> Control.Monad.State.State (Data.Set.Set Int) [Int]
+                -> Control.Monad.State.State Data.Int.Int64 [Int]
 all_componentsM player b =
   componentsM player b (Data.Map.findWithDefault [] player (taken b))
 
 component_sizes :: Player -> HexBoard -> [Int]
 component_sizes player b = Data.List.sortBy (flip compare)
-                         $ strip $ eval_set (all_componentsM player b)
+                         $ strip $ eval_int64 (all_componentsM player b)
   where strip = filter (>0)
 
 ------------------------------------------------------------------------------
