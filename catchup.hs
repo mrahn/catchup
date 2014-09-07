@@ -77,7 +77,11 @@ instance Show Player where
 data HexBoard = HexBoard { size :: Int
                          , stone :: Data.Map.Map Int Player
                          , taken :: Data.Map.Map Player [Int]
-                         } deriving (Eq, Ord)
+                         , id_of_point2D :: Point2D -> Int
+                         }
+
+instance Eq HexBoard where x == y = taken x == taken y
+instance Ord HexBoard where  compare x y = compare (taken x) (taken y)
 
 instance Put (Player, Int) HexBoard where
   put (player, field) b =
@@ -95,6 +99,7 @@ empty_hex_board :: Int -> HexBoard
 empty_hex_board n = HexBoard { size = n
                              , stone = Data.Map.empty
                              , taken = Data.Map.empty
+                             , id_of_point2D = id_of_point n . hexangular n
                              }
 
 ------------------------------------------------------------------------------
@@ -123,8 +128,7 @@ class Put a b where put :: a -> b -> b
 ------------------------------------------------------------------------------
 
 instance Put (Player, Point2D) HexBoard where
-  put (player, p) b = put (player, id_of_point n $ hexangular n p) b
-    where n = size b
+  put (player, p) b = put (player, id_of_point2D b p) b
 
 ------------------------------------------------------------------------------
 
@@ -211,8 +215,7 @@ instance Put [Int] Catchup where
           csize = maximum $ map (size_of_component (to_move c) new_board) fields
 
 instance Put [Point2D] Catchup where
-  put ps c = put (map (id_of_point n . hexangular n) ps) c
-    where n = size (board c)
+  put ps c = put (map (id_of_point2D (board c)) ps) c
 
 instance Put [String] Catchup where
   put input = put (map read input :: [Point2D])
