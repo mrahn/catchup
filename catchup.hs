@@ -4,6 +4,10 @@
 module Main (main) where
 
 import qualified Util (join, select, unique)
+import qualified HexPoint
+  ( HexPoint (HexPoint), fields, id_of_point, point_of_id, neighbouring
+  , rotate60, rotate300
+  )
 
 import qualified Data.Bits (shiftL, (.&.), (.|.))
 import qualified Data.Char (chr, ord)
@@ -15,53 +19,6 @@ import qualified Data.Map
 import qualified Data.Set (Set, fromList, toList, delete, map)
 import qualified Data.List (groupBy, sortBy)
 import qualified Control.Monad.State (State, get, modify, evalState)
-
-------------------------------------------------------------------------------
-
-data HexPoint = HexPoint Int Int Int deriving (Eq, Ord)
-
-hex_points :: Int -> [HexPoint]
-hex_points n = [ HexPoint x y z | x <- line, y <- line, z <- line
-                                , x + y + z == 0
-               ]
-  where line = [negate (pred n) .. pred n]
-
--- num_hex_points n == length (hex_points n)
-num_hex_points :: Int -> Int
-num_hex_points n = 3 * n * (n - 1) + min 1 n
-
-hex_fields :: Int -> [Int]
-hex_fields n = [0.. pred (num_hex_points n)]
-
-point_of_id :: Int -> (Int -> HexPoint)
-point_of_id n = (Data.Map.!) (Data.Map.fromList $ zip [0..] $ hex_points n)
-
-id_of_point :: Int -> (HexPoint -> Int)
-id_of_point n = (Data.Map.!) (Data.Map.fromList $ zip (hex_points n) [0..])
-
-coordinates :: HexPoint -> [Int]
-coordinates (HexPoint x y z) = [x, y, z]
-
-distance :: HexPoint -> HexPoint -> Int
-distance p =
-  flip div 2 . sum . map abs . zipWith (-) (coordinates p) . coordinates
-
-neighbouring :: Int -> [(HexPoint, [HexPoint])]
-neighbouring n =
-  [ (p, [ q | q <- hex_points n, distance q p == 1 ]) | p <- hex_points n ]
-
-------------------------------------------------------------------------------
-
-app :: (Int -> Int) -> HexPoint -> HexPoint
-app f (HexPoint a b c) = HexPoint (f a) (f b) (f c)
-
-hex_point_rotate60 :: HexPoint -> HexPoint
-hex_point_rotate60 (HexPoint x y z) = app (flip div 3)
-  $ HexPoint (2*x - y + 2*z) (2*x + 2*y - z) (-x + 2*y + 2*z)
-
-hex_point_rotate300 :: HexPoint -> HexPoint
-hex_point_rotate300 (HexPoint x y z) = app (flip div 3)
-  $ HexPoint (2*x + 2*y - z) (-x + 2*y + 2*z) (2*x - y + 2*z)
 
 ------------------------------------------------------------------------------
 
@@ -96,16 +53,16 @@ instance Put (Player, Int) HexBoard where
       }
 
 empty_hex_board :: Int -> HexBoard
-empty_hex_board n | length (hex_fields n) > 64 =
+empty_hex_board n | length (HexPoint.fields n) > 64 =
   error "Size to large. Traversal state has 64 bits only. Sorry."
 empty_hex_board n = HexBoard
   { size = n
   , stone = Data.Map.empty
   , taken = Data.Map.empty
-  , id_of_point2D = id_of_point n . hexangular n
+  , id_of_point2D = HexPoint.id_of_point n . hexangular n
   , neighbours = (Data.Map.!)
-      (Data.Map.fromList $ map (ap (id_of_point n)) $ neighbouring n)
-  , free_fields = Data.Set.fromList $ hex_fields n
+      (Data.Map.fromList $ map (ap (HexPoint.id_of_point n)) $ HexPoint.neighbouring n)
+  , free_fields = Data.Set.fromList $ HexPoint.fields n
   }
   where ap f (x, y) = (f x, map f y)
 
@@ -119,8 +76,8 @@ hex_board_rotate60 b = b
   , free_fields = Data.Set.map rot60 $ free_fields b
   }
   where n = size b
-        rot60 = id_of_point n . hex_point_rotate60 . point_of_id n
-        rot300 = id_of_point n . hex_point_rotate300 . point_of_id n
+        rot60 = HexPoint.id_of_point n . HexPoint.rotate60 . HexPoint.point_of_id n
+        rot300 = HexPoint.id_of_point n . HexPoint.rotate300 . HexPoint.point_of_id n
 
 ------------------------------------------------------------------------------
 
@@ -132,11 +89,11 @@ instance Show Point2D where
 instance Read Point2D where
   readsPrec _ (x:xs) = [(Point2D (Data.Char.ord x - 97) (read xs), [])]
 
-rectangluar :: Int -> HexPoint -> Point2D
-rectangluar n (HexPoint x y _) = Point2D (pred n + x) (pred n + y + min 0 x)
+rectangluar :: Int -> HexPoint.HexPoint -> Point2D
+rectangluar n (HexPoint.HexPoint x y _) = Point2D (pred n + x) (pred n + y + min 0 x)
 
-hexangular :: Int -> Point2D -> HexPoint
-hexangular n (Point2D x y) = HexPoint hx hy hz
+hexangular :: Int -> Point2D -> HexPoint.HexPoint
+hexangular n (Point2D x y) = HexPoint.HexPoint hx hy hz
   where hx = x - pred n
         hy = y - pred n - min 0 hx
         hz = -(hx + hy)
@@ -153,9 +110,9 @@ instance Put (Player, Point2D) HexBoard where
 ------------------------------------------------------------------------------
 
 rows :: HexBoard -> [[Int]]
-rows b = Data.List.groupBy same_x (hex_fields n)
+rows b = Data.List.groupBy same_x (HexPoint.fields n)
   where n = size b
-        coordinate_x f = let Point2D x _ = rectangluar n $ point_of_id n f
+        coordinate_x f = let Point2D x _ = rectangluar n $ HexPoint.point_of_id n f
                          in x
         same_x f1 f2 = coordinate_x f1 == coordinate_x f2
 
