@@ -76,8 +76,8 @@ data HexBoard = HexBoard { size :: Int
                          , neighbours :: Int -> [Int]
                          }
 
-instance Eq HexBoard where x == y = taken x == taken y
-instance Ord HexBoard where  compare x y = compare (taken x) (taken y)
+instance Eq HexBoard where x == y = stone x == stone y
+instance Ord HexBoard where  compare x y = compare (stone x) (stone y)
 
 instance Put (Player, Int) HexBoard where
   put (player, field) b =
