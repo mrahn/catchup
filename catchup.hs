@@ -10,7 +10,8 @@ import qualified Data.Map
    ( Map, empty, insert, insertWith, lookup, (!), fromList, findWithDefault
    , map, mapKeys
    )
-import qualified Data.Set (Set, fromList, toList, delete, map)
+import qualified Data.Set
+   (Set, fromList, toList, delete, map, member, insert, empty)
 import qualified Data.List (groupBy, intersperse, sortBy)
 import qualified Control.Monad.State (State, get, modify, evalState)
 
@@ -23,6 +24,13 @@ select :: Int -> [a] -> [[a]]
 select 0 _ = [[]]
 select _ [] = []
 select n (x:xs) = [ (x:ys) | ys <- select (pred n) xs ] ++ select n xs
+
+unique :: Ord a => [a] -> [a]
+unique = unique_ Data.Set.empty
+  where unique_ _ [] = []
+        unique_ cache (x:xs)
+          | Data.Set.member x cache = unique_ cache xs
+          | otherwise = x : unique_ (Data.Set.insert x cache) xs
 
 ------------------------------------------------------------------------------
 
