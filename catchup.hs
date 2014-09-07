@@ -244,18 +244,20 @@ paths c
 ------------------------------------------------------------------------------
 
 resultM :: Catchup
-        -> Control.Monad.State.State (Data.Map.Map Catchup Player) Player
+        -> Control.Monad.State.State
+           (Data.Map.Map (Player, Data.Map.Map Int Player) Player) Player
 resultM c
   | null cs = return $ compare_sizes (component_sizes Blue $ board c)
                                      (component_sizes Orange $ board c)
   | otherwise = do cache <- Control.Monad.State.get
-                   case Data.Map.lookup c cache of
+                   let key = (to_move c, stone $ board c)
+                   case Data.Map.lookup key cache of
                      Just v -> return v
                      Nothing -> do
                        rs <- mapM resultM cs
                        let sel = (if any (==to_move c) rs then id else other)
                            r = sel (to_move c)
-                       Control.Monad.State.modify (Data.Map.insert c r)
+                       Control.Monad.State.modify (Data.Map.insert key r)
                        return r
   where cs = suc c
 
