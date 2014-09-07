@@ -3,13 +3,15 @@
 
 module HexBoard
   ( HexBoard, empty, free_fields, stone, id_of_point2D, rotate60
-  , component_sizes, size_of_components
+  , component_sizes, size_of_components, mirror
   )
 where
 
 import qualified Util (join)
 import qualified HexPoint
-  (fields, id_of_point, point_of_id, neighbouring, rotate60, rotate300)
+  ( fields, id_of_point, point_of_id, neighbouring, rotate60, rotate300
+  , mirror, rorrim
+  )
 import qualified Player (Player)
 import qualified Put (Put (put))
 import qualified Point2D (Point2D, rectangluar, hexangular, coordinate_x)
@@ -71,6 +73,18 @@ rotate60 b = b
   where n = size b
         rot60 = HexPoint.id_of_point n . HexPoint.rotate60 . HexPoint.point_of_id n
         rot300 = HexPoint.id_of_point n . HexPoint.rotate300 . HexPoint.point_of_id n
+
+mirror :: Int -> HexBoard -> HexBoard
+mirror k b = b
+  { stone = Data.Map.mapKeys fun $ stone b
+  , taken = Data.Map.map (map fun) $ taken b
+  , id_of_point2D = fun . id_of_point2D b
+  , neighbours = map fun . neighbours b . rev
+  , free_fields = Data.Set.map fun $ free_fields b
+  }
+  where n = size b
+        fun = HexPoint.id_of_point n . HexPoint.mirror k . HexPoint.point_of_id n
+        rev = HexPoint.id_of_point n . HexPoint.rorrim k . HexPoint.point_of_id n
 
 ------------------------------------------------------------------------------
 
