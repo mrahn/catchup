@@ -10,7 +10,7 @@ import qualified Point2D (Point2D)
 
 import HexBoard (HexBoard)
 import qualified HexBoard
-  ( empty, free_fields, stone, id_of_point2D, rotate60
+  ( empty, free_fields, stone, depth, id_of_point2D, rotate60
   , component_sizes, size_of_components, mirror
   )
 import qualified Data.Map (Map, empty, insert, lookup)
@@ -80,8 +80,13 @@ normal = minimum . equiv
 
 ------------------------------------------------------------------------------
 
+all_suc :: Catchup -> [Catchup]
+all_suc c = concat [ sucN k c | k <- available_stones c ]
+
 suc :: Catchup -> [Catchup]
-suc c = Util.unique $ map normal $ concat [ sucN k c | k <- available_stones c ]
+suc c
+  | HexBoard.depth (board c) > 5 = all_suc c
+  | otherwise = Util.unique $ map normal $ all_suc c
 
 sucN :: Int -> Catchup -> [Catchup]
 sucN k c = map (flip Put.put c)

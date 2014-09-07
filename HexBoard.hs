@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module HexBoard
-  ( HexBoard, empty, free_fields, stone, id_of_point2D, rotate60
+  ( HexBoard, empty, free_fields, stone, depth, id_of_point2D, rotate60
   , component_sizes, size_of_components, mirror
   )
 where
@@ -34,6 +34,11 @@ data HexBoard = HexBoard { size :: Int
                          , id_of_point2D :: Point2D.Point2D -> Int
                          , neighbours :: Int -> [Int]
                          , free_fields :: Data.Set.Set Int
+                         , depth :: Int
+                         , rot60 :: Int -> Int
+                         , rot300 :: Int -> Int
+                         , mir :: [Int -> Int]
+                         , rim :: [Int -> Int]
                          }
 
 instance Eq HexBoard where x == y = stone x == stone y
@@ -44,6 +49,7 @@ instance Put.Put (Player.Player, Int) HexBoard where
     b { stone = Data.Map.insert field player (stone b)
       , taken = Data.Map.insertWith (++) player [field] (taken b)
       , free_fields = Data.Set.delete field (free_fields b)
+      , depth = succ $ depth b
       }
 
 empty :: Int -> HexBoard
@@ -53,12 +59,19 @@ empty n = HexBoard
   { size = n
   , stone = Data.Map.empty
   , taken = Data.Map.empty
-  , id_of_point2D = HexPoint.id_of_point n . Point2D.hexangular n
+  , id_of_point2D = iop . Point2D.hexangular n
   , neighbours = (Data.Map.!)
-      (Data.Map.fromList $ map (ap (HexPoint.id_of_point n)) $ HexPoint.neighbouring n)
+      (Data.Map.fromList $ map (ap iop) $ HexPoint.neighbouring n)
   , free_fields = Data.Set.fromList $ HexPoint.fields n
+  , depth = 0
+  , rot60 = iop . HexPoint.rotate60 . poi
+  , rot300 = iop . HexPoint.rotate300 . poi
+  , mir = map (\ k -> iop . HexPoint.mirror k . poi) [0..5]
+  , rim = map (\ k -> iop . HexPoint.rorrim k . poi) [0..5]
   }
   where ap f (x, y) = (f x, map f y)
+        iop = HexPoint.id_of_point n
+        poi = HexPoint.point_of_id n
 
 ------------------------------------------------------------------------------
 
@@ -72,16 +85,10 @@ app fun rev b = b
   }
 
 rotate60 :: HexBoard -> HexBoard
-rotate60 b = app rot60 rot300 b
-  where n = size b
-        rot60 = HexPoint.id_of_point n . HexPoint.rotate60 . HexPoint.point_of_id n
-        rot300 = HexPoint.id_of_point n . HexPoint.rotate300 . HexPoint.point_of_id n
+rotate60 b = app (rot60 b) (rot300 b) b
 
 mirror :: Int -> HexBoard -> HexBoard
-mirror k b = app fun rev b
-  where n = size b
-        fun = HexPoint.id_of_point n . HexPoint.mirror k . HexPoint.point_of_id n
-        rev = HexPoint.id_of_point n . HexPoint.rorrim k . HexPoint.point_of_id n
+mirror k b = app (mir b !! k) (rim b !! k) b
 
 ------------------------------------------------------------------------------
 
