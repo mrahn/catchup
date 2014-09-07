@@ -192,7 +192,7 @@ data Catchup = Catchup { board :: HexBoard
 catchup :: Int -> Catchup
 catchup n = Catchup { board = empty_hex_board n
                     , to_move = Blue
-                    , high_water = 1
+                    , high_water = 0
                     , available_stones = [1]
                     }
 
@@ -211,7 +211,8 @@ instance Put [Int] Catchup where
                          , to_move = other (to_move c)
                          , high_water = max csize $ high_water c
                          , available_stones =
-                             if csize > high_water c then [3] else [2]
+                             if high_water c > 0 && csize > high_water c
+                             then [1,2,3] else [1,2]
                          }
     where new_board = puts fields (board c)
           puts (f:fs) b = puts fs (put (to_move c, f) b)
