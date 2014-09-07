@@ -152,9 +152,6 @@ instance Show HexBoard where
 eval_set :: Control.Monad.State.State (Data.Set.Set s) a -> a
 eval_set = flip Control.Monad.State.Lazy.evalState Data.Set.empty
 
-size_of_component :: Player -> HexBoard -> Int -> Int
-size_of_component player b f = eval_set (componentM player b f)
-
 componentM :: Player -> HexBoard -> Int
            -> Control.Monad.State.State (Data.Set.Set Int) Int
 componentM player b field
@@ -167,14 +164,21 @@ componentM player b field
       _ -> return 0
 componentM _ _ _ = return 0
 
-componentsM :: Player -> HexBoard
+componentsM :: Player -> HexBoard -> [Int]
             -> Control.Monad.State.State (Data.Set.Set Int) [Int]
-componentsM player b =
-  mapM (componentM player b) (Data.Map.findWithDefault [] player (taken b))
+componentsM player b = mapM (componentM player b)
+
+size_of_components :: Player -> HexBoard -> [Int] -> [Int]
+size_of_components player b fs = eval_set (componentsM player b fs)
+
+all_componentsM :: Player -> HexBoard
+                -> Control.Monad.State.State (Data.Set.Set Int) [Int]
+all_componentsM player b =
+  componentsM player b (Data.Map.findWithDefault [] player (taken b))
 
 component_sizes :: Player -> HexBoard -> [Int]
 component_sizes player b = Data.List.sortBy (flip compare)
-                         $ strip $ eval_set (componentsM player b)
+                         $ strip $ eval_set (all_componentsM player b)
   where strip = filter (>0)
 
 ------------------------------------------------------------------------------
@@ -212,7 +216,7 @@ instance Put [Int] Catchup where
     where new_board = puts fields (board c)
           puts (f:fs) b = puts fs (put (to_move c, f) b)
           puts [] b = b
-          csize = maximum $ map (size_of_component (to_move c) new_board) fields
+          csize = maximum $ size_of_components (to_move c) new_board fields
 
 instance Put [Point2D] Catchup where
   put ps c = put (map (id_of_point2D (board c)) ps) c
