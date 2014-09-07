@@ -254,6 +254,9 @@ instance Put [Point2D] Catchup where
 instance Put [String] Catchup where
   put input = put (map read input :: [Point2D])
 
+catchup_rotate60 :: Catchup -> Catchup
+catchup_rotate60 c = c { board = hex_board_rotate60 $ board c }
+
 ------------------------------------------------------------------------------
 
 suc :: Catchup -> [Catchup]
