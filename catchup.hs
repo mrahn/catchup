@@ -7,8 +7,10 @@ import qualified Data.Bits (shiftL, (.&.), (.|.))
 import qualified Data.Char (chr, ord)
 import qualified Data.Int (Int64)
 import qualified Data.Map
-   (Map, empty, insert, insertWith, lookup, (!), fromList, findWithDefault)
-import qualified Data.Set (Set, fromList, toList, delete)
+   ( Map, empty, insert, insertWith, lookup, (!), fromList, findWithDefault
+   , map, mapKeys
+   )
+import qualified Data.Set (Set, fromList, toList, delete, map)
 import qualified Data.List (groupBy, intersperse, sortBy)
 import qualified Control.Monad.State (State, get, modify, evalState)
 
@@ -114,6 +116,19 @@ empty_hex_board n = HexBoard
   , free_fields = Data.Set.fromList $ hex_fields n
   }
   where ap f (x, y) = (f x, map f y)
+
+------------------------------------------------------------------------------
+
+hex_board_rotate60 b = b
+  { stone = Data.Map.mapKeys rot60 $ stone b
+  , taken = Data.Map.map (map rot60) $ taken b
+  , id_of_point2D = rot60 . id_of_point2D b
+  , neighbours = map rot60 . neighbours b . rot300
+  , free_fields = Data.Set.map rot60 $ free_fields b
+  }
+  where n = size b
+        rot60 = id_of_point n . hex_point_rotate60 . point_of_id n
+        rot300 = id_of_point n . hex_point_rotate300 . point_of_id n
 
 ------------------------------------------------------------------------------
 
