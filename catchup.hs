@@ -9,6 +9,7 @@ import qualified HexPoint
   , rotate60, rotate300
   )
 import Player (Player (Blue, Orange), other)
+import Put (Put (put))
 
 import qualified Data.Bits (shiftL, (.&.), (.|.))
 import qualified Data.Char (chr, ord)
@@ -86,10 +87,6 @@ hexangular n (Point2D x y) = HexPoint.HexPoint hx hy hz
   where hx = x - pred n
         hy = y - pred n - min 0 hx
         hz = -(hx + hy)
-
-------------------------------------------------------------------------------
-
-class Put a b where put :: a -> b -> b
 
 ------------------------------------------------------------------------------
 
