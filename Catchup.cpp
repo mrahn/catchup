@@ -246,13 +246,6 @@ namespace
           : 2;
       }
 
-      std::vector<int> sizes_of_components_of (player::player player) const
-      {
-        std::vector<int> sizes (sizes_of_components (_taken[player]));
-        std::sort (sizes.begin(), sizes.end(), std::greater<int>());
-        return sizes;
-      }
-
       std::vector<int> sizes_of_components (std::vector<int> fields) const
       {
         std::stack<int> stack;
@@ -289,6 +282,13 @@ namespace
           }
         }
 
+        return sizes;
+      }
+
+      std::vector<int> sizes_of_components_of (player::player player) const
+      {
+        std::vector<int> sizes (sizes_of_components (_taken[player]));
+        std::sort (sizes.begin(), sizes.end(), std::greater<int>());
         return sizes;
       }
 
