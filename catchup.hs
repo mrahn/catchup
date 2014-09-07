@@ -276,7 +276,7 @@ normal = minimum . rotations
 ------------------------------------------------------------------------------
 
 suc :: Catchup -> [Catchup]
-suc c = concat [ sucN k c | k <- available_stones c ]
+suc c = unique $ map normal $ concat [ sucN k c | k <- available_stones c ]
 
 sucN :: Int -> Catchup -> [Catchup]
 sucN k c = map (flip put c)
