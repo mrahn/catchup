@@ -8,10 +8,10 @@ import qualified HexPoint
   (fields, id_of_point, point_of_id, neighbouring, rotate60, rotate300)
 import qualified Player (Player (Blue, Orange), other)
 import qualified Put (Put (put))
-import qualified Point2D (Point2D (Point2D), rectangluar, hexangular)
+import qualified Point2D
+  (Point2D, rectangluar, hexangular, coordinate_x, read_lg_move)
 
 import qualified Data.Bits (shiftL, (.&.), (.|.))
-import qualified Data.Char (ord)
 import qualified Data.Int (Int64)
 import qualified Data.Map
    ( Map, empty, insert, insertWith, lookup, (!), fromList, findWithDefault
@@ -78,8 +78,7 @@ instance Put.Put (Player.Player, Point2D.Point2D) HexBoard where
 rows :: HexBoard -> [[Int]]
 rows b = Data.List.groupBy same_x (HexPoint.fields n)
   where n = size b
-        coordinate_x f = let Point2D.Point2D x _ = Point2D.rectangluar n $ HexPoint.point_of_id n f
-                         in x
+        coordinate_x f = Point2D.coordinate_x $ Point2D.rectangluar n $ HexPoint.point_of_id n f
         same_x f1 f2 = coordinate_x f1 == coordinate_x f2
 
 instance Show HexBoard where
@@ -236,14 +235,8 @@ main = print $ result $ lg1657875
 
 ------------------------------------------------------------------------------
 
-read_lg_move :: Int -> String -> Point2D.Point2D
-read_lg_move n (c:xs) = Point2D.Point2D x (shift y)
-  where x = (Data.Char.ord c - 65)
-        y = read xs - 1
-        shift = (+) (min 0 (x - pred n))
-
 import_lg_game :: [[String]] -> Catchup
-import_lg_game = foldl (flip Put.put) (catchup 5) . map (map (read_lg_move 5))
+import_lg_game = foldl (flip Put.put) (catchup 5) . map (map (Point2D.read_lg_move 5))
 
 lg1657875 :: Catchup
 lg1657875 = import_lg_game moves

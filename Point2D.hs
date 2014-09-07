@@ -1,4 +1,6 @@
-module Point2D (Point2D (Point2D), rectangluar, hexangular) where
+module Point2D
+  (Point2D, rectangluar, hexangular, coordinate_x, read_lg_move)
+where
 
 import qualified HexPoint (HexPoint (HexPoint))
 
@@ -22,3 +24,14 @@ hexangular n (Point2D x y) = HexPoint.HexPoint hx hy hz
   where hx = x - pred n
         hy = y - pred n - min 0 hx
         hz = -(hx + hy)
+
+coordinate_x :: Point2D -> Int
+coordinate_x (Point2D x _) = x
+
+------------------------------------------------------------------------------
+
+read_lg_move :: Int -> String -> Point2D
+read_lg_move n (c:xs) = Point2D x (shift y)
+  where x = (Data.Char.ord c - 65)
+        y = read xs - 1
+        shift = (+) (min 0 (x - pred n))
