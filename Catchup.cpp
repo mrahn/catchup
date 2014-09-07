@@ -306,15 +306,22 @@ namespace
           ++o_pos;
         }
 
-        return
-          (b_pos != b.end() && o_pos != o.end()) ? ( (*b_pos > *o_pos)
-                                                   ? player::Blue
-                                                   : player::Orange
-                                                   )
-          : (b_pos != b.end())                   ? player::Blue
-          : (o_pos != o.end())                   ? player::Orange
-          : player::None
-          ;
+        if (b_pos != b.end() && o_pos != o.end())
+        {
+          return (*b_pos > *o_pos) ? player::Blue : player::Orange;
+        }
+
+        if (b_pos != b.end())
+        {
+          return player::Blue;
+        }
+
+        if (o_pos != o.end())
+        {
+          return player::Orange;
+        }
+
+        abort();
       }
 
       std::vector<board> successors() const
