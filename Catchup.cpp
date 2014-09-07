@@ -249,7 +249,7 @@ namespace
       std::vector<int> sizes_of_components (std::vector<int> fields) const
       {
         std::stack<int> stack;
-        std::vector<bool> seen (point::plane_size (_size), 0);
+        std::vector<bool> seen (point::plane_size (_size), false);
         std::vector<int> sizes;
 
         for (int field : fields)
@@ -261,7 +261,7 @@ namespace
 
             stack.push (field);
             ++size;
-            seen[field] = 1;
+            seen[field] = true;
 
             while (!stack.empty())
             {
@@ -273,7 +273,7 @@ namespace
                 {
                   stack.push (n);
                   ++size;
-                  seen[n] = 1;
+                  seen[n] = true;
                 }
               }
             }
