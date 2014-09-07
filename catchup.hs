@@ -6,7 +6,7 @@ module Main (main) where
 import qualified Util (join, select, unique)
 import qualified HexPoint
   (fields, id_of_point, point_of_id, neighbouring, rotate60, rotate300)
-import Player (Player (Blue, Orange), other)
+import qualified Player (Player (Blue, Orange), other)
 import Put (Put (put))
 import qualified Point2D (Point2D (Point2D), rectangluar, hexangular)
 
@@ -24,8 +24,8 @@ import qualified Control.Monad.State (State, get, modify, evalState)
 ------------------------------------------------------------------------------
 
 data HexBoard = HexBoard { size :: Int
-                         , stone :: Data.Map.Map Int Player
-                         , taken :: Data.Map.Map Player [Int]
+                         , stone :: Data.Map.Map Int Player.Player
+                         , taken :: Data.Map.Map Player.Player [Int]
                          , id_of_point2D :: Point2D.Point2D -> Int
                          , neighbours :: Int -> [Int]
                          , free_fields :: Data.Set.Set Int
@@ -34,7 +34,7 @@ data HexBoard = HexBoard { size :: Int
 instance Eq HexBoard where x == y = stone x == stone y
 instance Ord HexBoard where  compare x y = compare (stone x) (stone y)
 
-instance Put (Player, Int) HexBoard where
+instance Put (Player.Player, Int) HexBoard where
   put (player, field) b =
     b { stone = Data.Map.insert field player (stone b)
       , taken = Data.Map.insertWith (++) player [field] (taken b)
@@ -70,7 +70,7 @@ hex_board_rotate60 b = b
 
 ------------------------------------------------------------------------------
 
-instance Put (Player, Point2D.Point2D) HexBoard where
+instance Put (Player.Player, Point2D.Point2D) HexBoard where
   put (player, p) b = put (player, id_of_point2D b p) b
 
 ------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ instance Show HexBoard where
 eval_int64 :: Control.Monad.State.State Data.Int.Int64 a -> a
 eval_int64 = flip Control.Monad.State.evalState 0
 
-componentM :: Player -> HexBoard -> Int
+componentM :: Player.Player -> HexBoard -> Int
            -> Control.Monad.State.State Data.Int.Int64 Int
 componentM player b field
   | Data.Map.lookup field (stone b) == Just player = do
@@ -108,19 +108,19 @@ componentM player b field
       _ -> return 0
 componentM _ _ _ = return 0
 
-componentsM :: Player -> HexBoard -> [Int]
+componentsM :: Player.Player -> HexBoard -> [Int]
             -> Control.Monad.State.State Data.Int.Int64 [Int]
 componentsM player b = mapM (componentM player b)
 
-size_of_components :: Player -> HexBoard -> [Int] -> [Int]
+size_of_components :: Player.Player -> HexBoard -> [Int] -> [Int]
 size_of_components player b fs = eval_int64 (componentsM player b fs)
 
-all_componentsM :: Player -> HexBoard
+all_componentsM :: Player.Player -> HexBoard
                 -> Control.Monad.State.State Data.Int.Int64 [Int]
 all_componentsM player b =
   componentsM player b (Data.Map.findWithDefault [] player (taken b))
 
-component_sizes :: Player -> HexBoard -> [Int]
+component_sizes :: Player.Player -> HexBoard -> [Int]
 component_sizes player b = Data.List.sortBy (flip compare)
                          $ strip $ eval_int64 (all_componentsM player b)
   where strip = filter (>0)
@@ -128,22 +128,22 @@ component_sizes player b = Data.List.sortBy (flip compare)
 ------------------------------------------------------------------------------
 
 data Catchup = Catchup { board :: HexBoard
-                       , to_move :: Player
+                       , to_move :: Player.Player
                        , high_water :: Int
                        , available_stones :: [Int]
                        } deriving (Eq, Ord)
 
 catchup :: Int -> Catchup
 catchup n = Catchup { board = empty_hex_board n
-                    , to_move = Blue
+                    , to_move = Player.Blue
                     , high_water = 0
                     , available_stones = [1]
                     }
 
 instance Show Catchup where
   showsPrec 0 c = (++) header
-                . (++) "\n" . (++) (show $ component_sizes Blue $ board c)
-                . (++) "\n" . (++) (show $ component_sizes Orange $ board c)
+                . (++) "\n" . (++) (show $ component_sizes Player.Blue $ board c)
+                . (++) "\n" . (++) (show $ component_sizes Player.Orange $ board c)
                 . (++) "\n" . showsPrec 0 (board c)
     where header = Util.join ", " [ show (high_water c)
                                   , show (to_move c)
@@ -152,7 +152,7 @@ instance Show Catchup where
 
 instance Put [Int] Catchup where
   put fields c = Catchup { board = new_board
-                         , to_move = other (to_move c)
+                         , to_move = Player.other (to_move c)
                          , high_water = max csize $ high_water c
                          , available_stones =
                              if high_water c > 0 && csize > high_water c
@@ -199,34 +199,34 @@ paths c
 
 resultM :: Catchup
         -> Control.Monad.State.State
-           (Data.Map.Map (Player, Data.Map.Map Int Player) Player) Player
+           (Data.Map.Map (Player.Player, Data.Map.Map Int Player.Player) Player.Player) Player.Player
 resultM c
-  | null cs = return $ compare_sizes (component_sizes Blue $ board c)
-                                     (component_sizes Orange $ board c)
+  | null cs = return $ compare_sizes (component_sizes Player.Blue $ board c)
+                                     (component_sizes Player.Orange $ board c)
   | otherwise = do cache <- Control.Monad.State.get
                    let key = (to_move c, stone $ board c)
                    case Data.Map.lookup key cache of
                      Just v -> return v
                      Nothing -> do
                        rs <- mapM resultM cs
-                       let sel = (if any (==to_move c) rs then id else other)
+                       let sel = (if any (==to_move c) rs then id else Player.other)
                            r = sel (to_move c)
                        Control.Monad.State.modify (Data.Map.insert key r)
                        return r
   where cs = suc c
 
-compare_sizes :: [Int] -> [Int] -> Player
+compare_sizes :: [Int] -> [Int] -> Player.Player
 compare_sizes (b:bs) (o:os) = case compare b o of
-                                GT -> Blue
-                                LT -> Orange
+                                GT -> Player.Blue
+                                LT -> Player.Orange
                                 EQ -> compare_sizes bs os
-compare_sizes (_:_) [] = Blue
-compare_sizes _ _ = Orange
+compare_sizes (_:_) [] = Player.Blue
+compare_sizes _ _ = Player.Orange
 
 eval_map :: Control.Monad.State.State (Data.Map.Map k v) a -> a
 eval_map = flip Control.Monad.State.evalState Data.Map.empty
 
-result :: Catchup -> Player
+result :: Catchup -> Player.Player
 result c = eval_map (resultM c)
 
 ------------------------------------------------------------------------------
