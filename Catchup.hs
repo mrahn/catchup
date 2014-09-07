@@ -98,20 +98,21 @@ paths c
 resultM :: Catchup
         -> Control.Monad.State.State
            (Data.Map.Map (Player.Player, Data.Map.Map Int Player.Player) Player.Player) Player.Player
-resultM c
-  | null cs = return $ compare_sizes (HexBoard.component_sizes Player.Blue $ board c)
-                                     (HexBoard.component_sizes Player.Orange $ board c)
-  | otherwise = do cache <- Control.Monad.State.get
-                   let key = (to_move c, HexBoard.stone $ board c)
-                   case Data.Map.lookup key cache of
-                     Just v -> return v
-                     Nothing -> do
-                       rs <- mapM resultM cs
-                       let sel = (if any (==to_move c) rs then id else Player.other)
-                           r = sel (to_move c)
-                       Control.Monad.State.modify (Data.Map.insert key r)
-                       return r
-  where cs = suc c
+resultM c = do
+    cache <- Control.Monad.State.get
+    let key =  (to_move c, HexBoard.stone $ board c)
+    case Data.Map.lookup key cache of
+      Just v -> return v
+      Nothing -> do
+        r <- case suc c of
+          [] -> return $ compare_sizes
+                           (HexBoard.component_sizes Player.Blue $ board c)
+                           (HexBoard.component_sizes Player.Orange $ board c)
+          cs -> do rs <- mapM resultM cs
+                   let sel = (if any (==to_move c) rs then id else Player.other)
+                   return $ sel (to_move c)
+        Control.Monad.State.modify (Data.Map.insert key r)
+        return r
 
 compare_sizes :: [Int] -> [Int] -> Player.Player
 compare_sizes (b:bs) (o:os) = case compare b o of
