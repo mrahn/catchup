@@ -1,4 +1,5 @@
 // mirko.rahn@web.de
+// clang++ -std=c++11 -Wall -Wextra -O3 -fno-exceptions Catchup.cpp
 
 #include <algorithm>
 #include <iostream>
