@@ -62,26 +62,23 @@ empty n = HexBoard
 
 ------------------------------------------------------------------------------
 
-rotate60 :: HexBoard -> HexBoard
-rotate60 b = b
-  { stone = Data.Map.mapKeys rot60 $ stone b
-  , taken = Data.Map.map (map rot60) $ taken b
-  , id_of_point2D = rot60 . id_of_point2D b
-  , neighbours = map rot60 . neighbours b . rot300
-  , free_fields = Data.Set.map rot60 $ free_fields b
-  }
-  where n = size b
-        rot60 = HexPoint.id_of_point n . HexPoint.rotate60 . HexPoint.point_of_id n
-        rot300 = HexPoint.id_of_point n . HexPoint.rotate300 . HexPoint.point_of_id n
-
-mirror :: Int -> HexBoard -> HexBoard
-mirror k b = b
+app :: (Int -> Int) -> (Int -> Int) -> HexBoard -> HexBoard
+app fun rev b = b
   { stone = Data.Map.mapKeys fun $ stone b
   , taken = Data.Map.map (map fun) $ taken b
   , id_of_point2D = fun . id_of_point2D b
   , neighbours = map fun . neighbours b . rev
   , free_fields = Data.Set.map fun $ free_fields b
   }
+
+rotate60 :: HexBoard -> HexBoard
+rotate60 b = app rot60 rot300 b
+  where n = size b
+        rot60 = HexPoint.id_of_point n . HexPoint.rotate60 . HexPoint.point_of_id n
+        rot300 = HexPoint.id_of_point n . HexPoint.rotate300 . HexPoint.point_of_id n
+
+mirror :: Int -> HexBoard -> HexBoard
+mirror k b = app fun rev b
   where n = size b
         fun = HexPoint.id_of_point n . HexPoint.mirror k . HexPoint.point_of_id n
         rev = HexPoint.id_of_point n . HexPoint.rorrim k . HexPoint.point_of_id n
