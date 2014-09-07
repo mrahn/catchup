@@ -204,6 +204,92 @@ namespace
         _high_water = std::max (_high_water, csize);
       }
 
+      player::player winner() const
+      {
+        std::vector<board> const sucs (successors());
+
+        if (sucs.empty())
+        {
+          return in_front();
+        }
+
+        for (board const& suc : sucs)
+        {
+          if (suc.winner() == _to_move)
+          {
+            return _to_move;
+          }
+        }
+
+        return player::other (_to_move);
+      }
+
+    private:
+      friend class show;
+
+      int const _size;
+      int _depth;
+      player::player _to_move;
+      int _high_water;
+      bool _increased_size_of_largest_group;
+      std::vector<std::vector<int>> const _neighbour;
+      std::unordered_set<int> _free_fields;
+      std::vector<player::player> _stone;
+      std::vector<std::vector<int>> _taken;
+
+      int available_stones() const
+      {
+        return _depth == 0 ? 1
+          : (_increased_size_of_largest_group && _depth > 1) ? 3
+          : 2;
+      }
+
+      std::vector<int> sizes_of_components_of (player::player player) const
+      {
+        std::vector<int> sizes (sizes_of_components (_taken[player]));
+        std::sort (sizes.begin(), sizes.end(), std::greater<int>());
+        return sizes;
+      }
+
+      std::vector<int> sizes_of_components (std::vector<int> fields) const
+      {
+        std::stack<int> stack;
+        std::vector<bool> seen (point::plane_size (_size), 0);
+        std::vector<int> sizes;
+
+        for (int field : fields)
+        {
+          if (!seen[field])
+          {
+            int size (0);
+            player::player const player (_stone[field]);
+
+            stack.push (field);
+            ++size;
+            seen[field] = 1;
+
+            while (!stack.empty())
+            {
+              int const f (stack.top()); stack.pop();
+
+              for (int n : _neighbour[f])
+              {
+                if (_stone[n] == player && !seen[n])
+                {
+                  stack.push (n);
+                  ++size;
+                  seen[n] = 1;
+                }
+              }
+            }
+
+            sizes.emplace_back (size);
+          }
+        }
+
+        return sizes;
+      }
+
       player::player in_front() const
       {
         std::vector<int> const b (sizes_of_components_of (player::Blue));
@@ -293,72 +379,6 @@ namespace
 
         return sucs;
       }
-
-    private:
-      friend class show;
-
-      int const _size;
-      int _depth;
-      player::player _to_move;
-      int _high_water;
-      bool _increased_size_of_largest_group;
-      std::vector<std::vector<int>> const _neighbour;
-      std::unordered_set<int> _free_fields;
-      std::vector<player::player> _stone;
-      std::vector<std::vector<int>> _taken;
-
-      int available_stones() const
-      {
-        return _depth == 0 ? 1
-          : (_increased_size_of_largest_group && _depth > 1) ? 3
-          : 2;
-      }
-
-      std::vector<int> sizes_of_components_of (player::player player) const
-      {
-        std::vector<int> sizes (sizes_of_components (_taken[player]));
-        std::sort (sizes.begin(), sizes.end(), std::greater<int>());
-        return sizes;
-      }
-
-      std::vector<int> sizes_of_components (std::vector<int> fields) const
-      {
-        std::stack<int> stack;
-        std::vector<bool> seen (point::plane_size (_size), 0);
-        std::vector<int> sizes;
-
-        for (int field : fields)
-        {
-          if (!seen[field])
-          {
-            int size (0);
-            player::player const player (_stone[field]);
-
-            stack.push (field);
-            ++size;
-            seen[field] = 1;
-
-            while (!stack.empty())
-            {
-              int const f (stack.top()); stack.pop();
-
-              for (int n : _neighbour[f])
-              {
-                if (_stone[n] == player && !seen[n])
-                {
-                  stack.push (n);
-                  ++size;
-                  seen[n] = 1;
-                }
-              }
-            }
-
-            sizes.emplace_back (size);
-          }
-        }
-
-        return sizes;
-      }
     };
 
     class show
@@ -423,13 +443,8 @@ namespace
 
 int main()
 {
-  board::board b (2);
+  board::board board (2);
 
-  b.put ({3});
-  b.put ({0,1});
-
-  for (board::board const& s : b.successors())
-  {
-    std::cout << s;
-  }
+  std::cout << board::show (board);
+  std::cout << player::show (board.winner()) << std::endl;
 }
