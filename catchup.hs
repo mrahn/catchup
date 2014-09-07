@@ -6,7 +6,8 @@ module Main (main) where
 import qualified Data.Char (chr, ord)
 import qualified Data.Map
    (Map, empty, insert, insertWith, lookup, (!), fromList, findWithDefault)
-import qualified Data.Set (Set, empty, member, insert)
+import qualified Data.Set
+   (Set, empty, member, insert, fromList, toList, delete)
 import qualified Data.List (groupBy, intersperse, sortBy)
 import qualified Control.Monad.State (State, get, modify)
 import qualified Control.Monad.State.Lazy (evalState)
@@ -74,6 +75,7 @@ data HexBoard = HexBoard { size :: Int
                          , taken :: Data.Map.Map Player [Int]
                          , id_of_point2D :: Point2D -> Int
                          , neighbours :: Int -> [Int]
+                         , free_fields :: Data.Set.Set Int
                          }
 
 instance Eq HexBoard where x == y = stone x == stone y
@@ -83,13 +85,8 @@ instance Put (Player, Int) HexBoard where
   put (player, field) b =
     b { stone = Data.Map.insert field player (stone b)
       , taken = Data.Map.insertWith (++) player [field] (taken b)
+      , free_fields = Data.Set.delete field (free_fields b)
       }
-
-is_free :: HexBoard -> Int -> Bool
-is_free b field = Nothing == Data.Map.lookup field (stone b)
-
-free_fields :: HexBoard -> [Int]
-free_fields b = filter (is_free b) (hex_fields (size b))
 
 empty_hex_board :: Int -> HexBoard
 empty_hex_board n = HexBoard
@@ -99,6 +96,7 @@ empty_hex_board n = HexBoard
   , id_of_point2D = id_of_point n . hexangular n
   , neighbours = (Data.Map.!)
       (Data.Map.fromList $ map (ap (id_of_point n)) $ neighbouring n)
+  , free_fields = Data.Set.fromList $ hex_fields n
   }
   where ap f (x, y) = (f x, map f y)
 
@@ -231,7 +229,8 @@ suc :: Catchup -> [Catchup]
 suc c = concat [ sucN k c | k <- available_stones c ]
 
 sucN :: Int -> Catchup -> [Catchup]
-sucN k c = map (flip put c) $ select k (free_fields $ board c)
+sucN k c = map (flip put c)
+         $ select k (Data.Set.toList $ free_fields $ board c)
 
 paths :: Catchup -> [[Catchup]]
 paths c
