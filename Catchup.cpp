@@ -1,0 +1,349 @@
+
+#include <algorithm>
+#include <iostream>
+#include <map>
+#include <stack>
+#include <tuple>
+#include <unordered_set>
+#include <vector>
+
+namespace
+{
+  namespace point
+  {
+    typedef std::tuple<int, int, int> point;
+
+    int x (point const& p) { return std::get<0> (p); }
+    int y (point const& p) { return std::get<1> (p); }
+    int z (point const& p) { return std::get<2> (p); }
+
+    std::vector<point> plane (int size)
+    {
+      std::vector<point> p;
+
+      for (int x (1 - size); x < size; ++x)
+      {
+        for (int y (1 - size); y < size; ++y)
+        {
+          for (int z (1 - size); z < size; ++z)
+          {
+            if (x + y + z == 0)
+            {
+              p.emplace_back (x, y, z);
+            }
+          }
+        }
+      }
+
+      return p;
+    }
+
+    int distance (point const& a, point const& b)
+    {
+      return ( std::abs (x (a) - x (b))
+             + std::abs (y (a) - y (b))
+             + std::abs (z (a) - z (b))
+             ) / 2;
+    }
+
+    point rotate60 (point const& p)
+    {
+      return point ( (2 * x (p) -     y (p) + 2 * z (p)) / 3
+                   , (2 * x (p) + 2 * y (p) -     z (p)) / 3
+                   , (   -x (p) + 2 * y (p) + 2 * z (p)) / 3
+                   );
+    }
+
+    point rotate300 (point const& p)
+    {
+      return point ( (2 * x (p) + 2 * y (p) -     z (p)) / 3
+                   , (   -x (p) + 2 * y (p) + 2 * z (p)) / 3
+                   , (2 * x (p) -     y (p) + 2 * z (p)) / 3
+                   );
+    }
+
+    point mirror (point const& p, int k)
+    {
+      switch (k)
+      {
+      case 0: return point (x (p), y (p), z (p));
+      case 1: return point (x (p), z (p), y (p));
+      case 2: return point (y (p), x (p), z (p));
+      case 3: return point (y (p), z (p), x (p));
+      case 4: return point (z (p), x (p), y (p));
+      case 5: return point (z (p), y (p), x (p));
+      }
+
+      abort();
+    }
+  }
+
+  namespace player
+  {
+    typedef enum {Blue = 0, Orange = 1, None} player;
+
+    player other (player p)
+    {
+      return (p == Blue) ? Orange : Blue;
+    }
+
+    class show
+    {
+    public:
+      show (player const& player)
+        : _player (player)
+      {}
+      std::ostream& operator() (std::ostream& os) const
+      {
+        return os << ( (_player == Blue) ? 'B'
+                     : (_player == Orange) ? 'O'
+                     : '.'
+                     );
+      }
+
+    private:
+      player const& _player;
+    };
+    std::ostream& operator<< (std::ostream& os, show const& s)
+    {
+      return s (os);
+    }
+  }
+
+  namespace board
+  {
+    class show;
+
+    namespace
+    {
+      std::map<point::point, int>
+        numbered (std::vector<point::point> const& ps)
+      {
+        std::map<point::point, int> m;
+        int k (0);
+
+        for (point::point const& p : ps)
+        {
+          m.emplace (p, k++);
+        }
+
+        return m;
+      }
+
+      std::vector<std::vector<int>> neighbours
+        (std::vector<point::point> const& points)
+      {
+        std::map<point::point, int> const id_by_point (numbered (points));
+        std::vector<std::vector<int>> ns (points.size());
+        int k (0);
+
+        for (point::point const& p : points)
+        {
+          std::vector<int>& n (ns[k++]);
+
+          for (point::point const& q : points)
+          {
+            if (point::distance (p, q) == 1)
+            {
+              n.emplace_back (id_by_point.at (q));
+            }
+          }
+        }
+
+        return ns;
+      }
+
+      std::unordered_set<int> full (int n)
+      {
+        std::unordered_set<int> s;
+
+        for (int i (0); i < n; ++i)
+        {
+          s.emplace (i);
+        }
+
+        return s;
+      }
+    }
+
+    class board
+    {
+    public:
+      board (int size)
+        : _size (size)
+        , _depth (0)
+        , _to_move (player::Blue)
+        , _high_water (0)
+        , _increased_size_of_largest_group (false)
+        , _points (point::plane (_size))
+        , _neighbour (neighbours (_points))
+        , _free_fields (full (_points.size()))
+        , _stone (_points.size(), player::None)
+        , _taken (2)
+      {}
+
+      void put (std::vector<int> fields)
+      {
+        for (int field : fields)
+        {
+          _stone[field] = _to_move;
+          _taken[_to_move].emplace_back (field);
+          _free_fields.erase (field);
+          ++_depth;
+        }
+
+        _to_move = other (_to_move);
+        std::vector<int> const sizes (sizes_of_components (fields));
+        int const csize (*std::max_element (sizes.begin(), sizes.end()));
+        _increased_size_of_largest_group
+          = (_high_water > 0 && csize > _high_water);
+        _high_water = std::max (_high_water, csize);
+      }
+
+    private:
+      friend class show;
+
+      int const _size;
+      int _depth;
+      player::player _to_move;
+      int _high_water;
+      bool _increased_size_of_largest_group;
+      std::vector<point::point> const _points;
+      std::vector<std::vector<int>> const _neighbour;
+      std::unordered_set<int> _free_fields;
+      std::vector<player::player> _stone;
+      std::vector<std::vector<int>> _taken;
+
+      int available_stones() const
+      {
+        return _depth == 0 ? 1
+          : (_increased_size_of_largest_group && _depth > 1) ? 3
+          : 2;
+      }
+
+      std::vector<int> sizes_of_components (std::vector<int> fields)
+      {
+        std::stack<int> stack;
+        std::vector<bool> seen (_points.size(), 0);
+        std::vector<int> sizes;
+
+        for (int field : fields)
+        {
+          if (!seen[field])
+          {
+            int size (0);
+            player::player const player (_stone[field]);
+
+            stack.push (field);
+            ++size;
+            seen[field] = 1;
+
+            while (!stack.empty())
+            {
+              int const f (stack.top()); stack.pop();
+
+              for (int n : _neighbour[f])
+              {
+                if (_stone[n] == player && !seen[n])
+                {
+                  stack.push (n);
+                  ++size;
+                  seen[n] = 1;
+                }
+              }
+            }
+
+            sizes.emplace_back (size);
+          }
+        }
+
+        return sizes;
+      }
+    };
+
+    class show
+    {
+    public:
+      show (board const& board)
+        : _board (board)
+      {}
+      std::ostream& operator() (std::ostream& os) const
+      {
+        os << "to_move " << player::show (_board._to_move)
+           << ", high_water " << _board._high_water
+           << ", stones " << _board.available_stones()
+           << "\n";
+
+        int line_x (0);
+        int k (0);
+        int prefix (_board._size - 1);
+        int delta (-1);
+
+        auto const print_prefix ([&os, &prefix, &delta]
+                                {
+                                  os << std::string (prefix, ' ');
+                                  prefix += delta;
+                                  if (prefix == 0)
+                                  {
+                                    delta = -delta;
+                                  }
+                                }
+                                );
+
+        print_prefix();
+
+        for (point::point const& p : _board._points)
+        {
+          int const x (point::x (p) + _board._size - 1);
+
+          if (x != line_x)
+          {
+            line_x = x;
+            os << "\n";
+            print_prefix();
+          }
+
+          os << " " << player::show (_board._stone[k]);
+
+          ++k;
+        }
+
+        return os << "\n";
+      }
+
+    private:
+      board const& _board;
+    };
+    std::ostream& operator<< (std::ostream& os, show const& s)
+    {
+      return s (os);
+    }
+  }
+}
+
+int main()
+{
+  board::board b (3);
+
+  std::cout << board::show (b);
+
+  b.put ({4});
+
+  std::cout << board::show (b);
+
+  b.put ({9,10});
+
+  std::cout << board::show (b);
+
+  b.put ({13,11});
+
+  std::cout << board::show (b);
+
+  b.put ({15,8});
+
+  std::cout << board::show (b);
+
+  b.put ({5,6});
+
+  std::cout << board::show (b);
+}
