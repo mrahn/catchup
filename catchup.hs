@@ -55,11 +55,6 @@ neighbouring :: Int -> [(HexPoint, [HexPoint])]
 neighbouring n =
   [ (p, [ q | q <- hex_points n, distance q p == 1 ]) | p <- hex_points n ]
 
-neighbours :: Int -> (Int -> [Int])
-neighbours n =
-  (Data.Map.!) (Data.Map.fromList $ map (ap (id_of_point n)) $ neighbouring n)
-  where ap f (x, y) = (f x, map f y)
-
 ------------------------------------------------------------------------------
 
 data Player = Blue | Orange deriving (Eq, Ord)
@@ -78,6 +73,7 @@ data HexBoard = HexBoard { size :: Int
                          , stone :: Data.Map.Map Int Player
                          , taken :: Data.Map.Map Player [Int]
                          , id_of_point2D :: Point2D -> Int
+                         , neighbours :: Int -> [Int]
                          }
 
 instance Eq HexBoard where x == y = taken x == taken y
@@ -96,11 +92,15 @@ free_fields :: HexBoard -> [Int]
 free_fields b = filter (is_free b) (hex_fields (size b))
 
 empty_hex_board :: Int -> HexBoard
-empty_hex_board n = HexBoard { size = n
-                             , stone = Data.Map.empty
-                             , taken = Data.Map.empty
-                             , id_of_point2D = id_of_point n . hexangular n
-                             }
+empty_hex_board n = HexBoard
+  { size = n
+  , stone = Data.Map.empty
+  , taken = Data.Map.empty
+  , id_of_point2D = id_of_point n . hexangular n
+  , neighbours = (Data.Map.!)
+      (Data.Map.fromList $ map (ap (id_of_point n)) $ neighbouring n)
+  }
+  where ap f (x, y) = (f x, map f y)
 
 ------------------------------------------------------------------------------
 
@@ -162,7 +162,7 @@ componentM player b field
     cache <- Control.Monad.State.get
     case Data.Set.member field cache of
       False -> do Control.Monad.State.modify (Data.Set.insert field)
-                  vs <- mapM (componentM player b) (neighbours (size b) field)
+                  vs <- mapM (componentM player b) (neighbours b field)
                   return $ succ $ sum vs
       _ -> return 0
 componentM _ _ _ = return 0
