@@ -9,8 +9,7 @@ import qualified Data.Map
 import qualified Data.Set
    (Set, empty, member, insert, fromList, toList, delete)
 import qualified Data.List (groupBy, intersperse, sortBy)
-import qualified Control.Monad.State (State, get, modify)
-import qualified Control.Monad.State.Lazy (evalState)
+import qualified Control.Monad.State (State, get, modify, evalState)
 
 ------------------------------------------------------------------------------
 
@@ -148,7 +147,7 @@ instance Show HexBoard where
 ------------------------------------------------------------------------------
 
 eval_set :: Control.Monad.State.State (Data.Set.Set s) a -> a
-eval_set = flip Control.Monad.State.Lazy.evalState Data.Set.empty
+eval_set = flip Control.Monad.State.evalState Data.Set.empty
 
 componentM :: Player -> HexBoard -> Int
            -> Control.Monad.State.State (Data.Set.Set Int) Int
@@ -265,7 +264,7 @@ compare_sizes (_:_) [] = Blue
 compare_sizes _ _ = Orange
 
 eval_map :: Control.Monad.State.State (Data.Map.Map k v) a -> a
-eval_map = flip Control.Monad.State.Lazy.evalState Data.Map.empty
+eval_map = flip Control.Monad.State.evalState Data.Map.empty
 
 result :: Catchup -> Player
 result c = eval_map (resultM c)
