@@ -1,6 +1,6 @@
 module HexPoint
   ( HexPoint (HexPoint), fields, id_of_point, point_of_id, neighbouring
-  , rotate60, rotate300
+  , rotate60, rotate300, mirror, rorrim
   )
 where
 
@@ -52,3 +52,21 @@ rotate60 (HexPoint x y z) = app (flip div 3)
 rotate300 :: HexPoint -> HexPoint
 rotate300 (HexPoint x y z) = app (flip div 3)
   $ HexPoint (2*x + 2*y - z) (-x + 2*y + 2*z) (2*x - y + 2*z)
+
+------------------------------------------------------------------------------
+
+mirror :: Int -> HexPoint -> HexPoint
+mirror 0 (HexPoint x y z) = HexPoint x y z
+mirror 1 (HexPoint x y z) = HexPoint x z y
+mirror 2 (HexPoint x y z) = HexPoint y x z
+mirror 3 (HexPoint x y z) = HexPoint y z x
+mirror 4 (HexPoint x y z) = HexPoint z x y
+mirror 5 (HexPoint x y z) = HexPoint z y x
+
+rorrim :: Int -> HexPoint -> HexPoint
+rorrim 0 (HexPoint x y z) = HexPoint x y z
+rorrim 1 (HexPoint x z y) = HexPoint x y z
+rorrim 2 (HexPoint y x z) = HexPoint x y z
+rorrim 3 (HexPoint y z x) = HexPoint x y z
+rorrim 4 (HexPoint z x y) = HexPoint x y z
+rorrim 5 (HexPoint z y x) = HexPoint x y z
