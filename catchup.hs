@@ -3,6 +3,8 @@
 
 module Main (main) where
 
+import qualified Util (join, select, unique)
+
 import qualified Data.Bits (shiftL, (.&.), (.|.))
 import qualified Data.Char (chr, ord)
 import qualified Data.Int (Int64)
@@ -10,27 +12,9 @@ import qualified Data.Map
    ( Map, empty, insert, insertWith, lookup, (!), fromList, findWithDefault
    , map, mapKeys
    )
-import qualified Data.Set
-   (Set, fromList, toList, delete, map, member, insert, empty)
-import qualified Data.List (groupBy, intersperse, sortBy)
+import qualified Data.Set (Set, fromList, toList, delete, map)
+import qualified Data.List (groupBy, sortBy)
 import qualified Control.Monad.State (State, get, modify, evalState)
-
-------------------------------------------------------------------------------
-
-join :: [a] -> [[a]] -> [a]
-join sep = concat . Data.List.intersperse sep
-
-select :: Int -> [a] -> [[a]]
-select 0 _ = [[]]
-select _ [] = []
-select n (x:xs) = [ (x:ys) | ys <- select (pred n) xs ] ++ select n xs
-
-unique :: Ord a => [a] -> [a]
-unique = unique_ Data.Set.empty
-  where unique_ _ [] = []
-        unique_ cache (x:xs)
-          | Data.Set.member x cache = unique_ cache xs
-          | otherwise = x : unique_ (Data.Set.insert x cache) xs
 
 ------------------------------------------------------------------------------
 
@@ -176,11 +160,11 @@ rows b = Data.List.groupBy same_x (hex_fields n)
         same_x f1 f2 = coordinate_x f1 == coordinate_x f2
 
 instance Show HexBoard where
-  showsPrec 0 b = (++) (join "\n" $ map nice_row $ rows b)
+  showsPrec 0 b = (++) (Util.join "\n" $ map nice_row $ rows b)
     where nice_field field = case Data.Map.lookup field (stone b) of
                                Nothing -> "."
                                Just player -> show player
-          nice_row row = prefix (length row) ++ join " " (map nice_field row)
+          nice_row row = prefix (length row) ++ Util.join " " (map nice_field row)
           prefix k = replicate (2 * size b - 1 - k) ' '
 
 ------------------------------------------------------------------------------
@@ -238,10 +222,10 @@ instance Show Catchup where
                 . (++) "\n" . (++) (show $ component_sizes Blue $ board c)
                 . (++) "\n" . (++) (show $ component_sizes Orange $ board c)
                 . (++) "\n" . showsPrec 0 (board c)
-    where header = join ", " [ show (high_water c)
-                             , show (to_move c)
-                             , show (available_stones c)
-                             ]
+    where header = Util.join ", " [ show (high_water c)
+                                  , show (to_move c)
+                                  , show (available_stones c)
+                                  ]
 
 instance Put [Int] Catchup where
   put fields c = Catchup { board = new_board
@@ -276,11 +260,11 @@ normal = minimum . rotations
 ------------------------------------------------------------------------------
 
 suc :: Catchup -> [Catchup]
-suc c = unique $ map normal $ concat [ sucN k c | k <- available_stones c ]
+suc c = Util.unique $ map normal $ concat [ sucN k c | k <- available_stones c ]
 
 sucN :: Int -> Catchup -> [Catchup]
 sucN k c = map (flip put c)
-         $ select k (Data.Set.toList $ free_fields $ board c)
+         $ Util.select k (Data.Set.toList $ free_fields $ board c)
 
 paths :: Catchup -> [[Catchup]]
 paths c
