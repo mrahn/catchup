@@ -5,14 +5,13 @@ module Main (main) where
 
 import qualified Util (join, select, unique)
 import qualified HexPoint
-  ( HexPoint (HexPoint), fields, id_of_point, point_of_id, neighbouring
-  , rotate60, rotate300
-  )
+  (fields, id_of_point, point_of_id, neighbouring, rotate60, rotate300)
 import Player (Player (Blue, Orange), other)
 import Put (Put (put))
+import qualified Point2D (Point2D (Point2D), rectangluar, hexangular)
 
 import qualified Data.Bits (shiftL, (.&.), (.|.))
-import qualified Data.Char (chr, ord)
+import qualified Data.Char (ord)
 import qualified Data.Int (Int64)
 import qualified Data.Map
    ( Map, empty, insert, insertWith, lookup, (!), fromList, findWithDefault
@@ -27,7 +26,7 @@ import qualified Control.Monad.State (State, get, modify, evalState)
 data HexBoard = HexBoard { size :: Int
                          , stone :: Data.Map.Map Int Player
                          , taken :: Data.Map.Map Player [Int]
-                         , id_of_point2D :: Point2D -> Int
+                         , id_of_point2D :: Point2D.Point2D -> Int
                          , neighbours :: Int -> [Int]
                          , free_fields :: Data.Set.Set Int
                          }
@@ -49,7 +48,7 @@ empty_hex_board n = HexBoard
   { size = n
   , stone = Data.Map.empty
   , taken = Data.Map.empty
-  , id_of_point2D = HexPoint.id_of_point n . hexangular n
+  , id_of_point2D = HexPoint.id_of_point n . Point2D.hexangular n
   , neighbours = (Data.Map.!)
       (Data.Map.fromList $ map (ap (HexPoint.id_of_point n)) $ HexPoint.neighbouring n)
   , free_fields = Data.Set.fromList $ HexPoint.fields n
@@ -71,26 +70,7 @@ hex_board_rotate60 b = b
 
 ------------------------------------------------------------------------------
 
-data Point2D = Point2D Int Int
-
-instance Show Point2D where
-  showsPrec _ (Point2D x y) = (:) (Data.Char.chr (x + 97)) . (++) (show y)
-
-instance Read Point2D where
-  readsPrec _ (x:xs) = [(Point2D (Data.Char.ord x - 97) (read xs), [])]
-
-rectangluar :: Int -> HexPoint.HexPoint -> Point2D
-rectangluar n (HexPoint.HexPoint x y _) = Point2D (pred n + x) (pred n + y + min 0 x)
-
-hexangular :: Int -> Point2D -> HexPoint.HexPoint
-hexangular n (Point2D x y) = HexPoint.HexPoint hx hy hz
-  where hx = x - pred n
-        hy = y - pred n - min 0 hx
-        hz = -(hx + hy)
-
-------------------------------------------------------------------------------
-
-instance Put (Player, Point2D) HexBoard where
+instance Put (Player, Point2D.Point2D) HexBoard where
   put (player, p) b = put (player, id_of_point2D b p) b
 
 ------------------------------------------------------------------------------
@@ -98,7 +78,7 @@ instance Put (Player, Point2D) HexBoard where
 rows :: HexBoard -> [[Int]]
 rows b = Data.List.groupBy same_x (HexPoint.fields n)
   where n = size b
-        coordinate_x f = let Point2D x _ = rectangluar n $ HexPoint.point_of_id n f
+        coordinate_x f = let Point2D.Point2D x _ = Point2D.rectangluar n $ HexPoint.point_of_id n f
                          in x
         same_x f1 f2 = coordinate_x f1 == coordinate_x f2
 
@@ -183,11 +163,11 @@ instance Put [Int] Catchup where
           puts [] b = b
           csize = maximum $ size_of_components (to_move c) new_board fields
 
-instance Put [Point2D] Catchup where
+instance Put [Point2D.Point2D] Catchup where
   put ps c = put (map (id_of_point2D (board c)) ps) c
 
 instance Put [String] Catchup where
-  put input = put (map read input :: [Point2D])
+  put input = put (map read input :: [Point2D.Point2D])
 
 ------------------------------------------------------------------------------
 
@@ -256,8 +236,8 @@ main = print $ result $ lg1657875
 
 ------------------------------------------------------------------------------
 
-read_lg_move :: Int -> String -> Point2D
-read_lg_move n (c:xs) = Point2D x (shift y)
+read_lg_move :: Int -> String -> Point2D.Point2D
+read_lg_move n (c:xs) = Point2D.Point2D x (shift y)
   where x = (Data.Char.ord c - 65)
         y = read xs - 1
         shift = (+) (min 0 (x - pred n))
