@@ -8,6 +8,7 @@ import qualified HexPoint
   ( HexPoint (HexPoint), fields, id_of_point, point_of_id, neighbouring
   , rotate60, rotate300
   )
+import Player (Player (Blue, Orange), other)
 
 import qualified Data.Bits (shiftL, (.&.), (.|.))
 import qualified Data.Char (chr, ord)
@@ -19,18 +20,6 @@ import qualified Data.Map
 import qualified Data.Set (Set, fromList, toList, delete, map)
 import qualified Data.List (groupBy, sortBy)
 import qualified Control.Monad.State (State, get, modify, evalState)
-
-------------------------------------------------------------------------------
-
-data Player = Blue | Orange deriving (Eq, Ord)
-
-other :: Player -> Player
-other Blue = Orange
-other Orange = Blue
-
-instance Show Player where
-  showsPrec _ Blue = (++) "B"
-  showsPrec _ Orange = (++) "O"
 
 ------------------------------------------------------------------------------
 
