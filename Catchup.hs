@@ -63,17 +63,20 @@ instance Put.Put [String] Catchup where
 
 ------------------------------------------------------------------------------
 
-catchup_rotate60 :: Catchup -> Catchup
-catchup_rotate60 c = c { board = HexBoard.rotate60 $ board c }
-
-rotations :: Catchup -> [Catchup]
-rotations = take 6 . iterate catchup_rotate60
+rotate60 :: Catchup -> Catchup
+rotate60 c = c { board = HexBoard.rotate60 $ board c }
 
 mirror :: Int -> Catchup -> Catchup
 mirror k c = c { board = HexBoard.mirror k $ board c }
 
+mirrors :: Catchup -> [Catchup]
+mirrors c = map (flip mirror c) [0..5]
+
+equiv :: Catchup -> [Catchup]
+equiv c = mirrors c ++ mirrors (rotate60 c)
+
 normal :: Catchup -> Catchup
-normal = minimum . rotations
+normal = minimum . equiv
 
 ------------------------------------------------------------------------------
 
