@@ -1,3 +1,4 @@
+// mirko.rahn@web.de
 
 #include <algorithm>
 #include <iostream>
