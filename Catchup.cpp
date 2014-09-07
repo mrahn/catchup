@@ -204,6 +204,96 @@ namespace
         _high_water = std::max (_high_water, csize);
       }
 
+      player::player in_front() const
+      {
+        std::vector<int> const b (sizes_of_components_of (player::Blue));
+        std::vector<int> const o (sizes_of_components_of (player::Orange));
+
+        std::vector<int>::const_iterator b_pos (b.begin());
+        std::vector<int>::const_iterator o_pos (o.begin());
+
+        while (b_pos != b.end() && o_pos != o.end() && *b_pos == *o_pos)
+        {
+          ++b_pos;
+          ++o_pos;
+        }
+
+        return
+          (b_pos != b.end() && o_pos != o.end()) ? ( (*b_pos > *o_pos)
+                                                   ? player::Blue
+                                                   : player::Orange
+                                                   )
+          : (b_pos != b.end())                   ? player::Blue
+          : (o_pos != o.end())                   ? player::Orange
+          : player::None
+          ;
+      }
+
+      std::vector<board> successors() const
+      {
+        std::vector<board> sucs;
+
+        for (int f : _free_fields)
+        {
+          sucs.emplace_back (*this);
+
+          sucs.back().put ({f});
+        }
+
+        if (available_stones() > 1 && _free_fields.size() > 1)
+        {
+          std::unordered_set<int>::const_iterator f (_free_fields.begin());
+
+          while (std::next (f, 1) != _free_fields.end())
+          {
+            std::unordered_set<int>::const_iterator g (std::next (f, 1));
+
+            do
+            {
+              sucs.emplace_back (*this);
+
+              sucs.back().put ({*f, *g});
+
+              ++g;
+            }
+            while (g != _free_fields.end());
+
+            ++f;
+          }
+        }
+
+        if (available_stones() > 2 && _free_fields.size() > 2)
+        {
+          std::unordered_set<int>::const_iterator f (_free_fields.begin());
+
+          while (std::next (f, 2) != _free_fields.end())
+          {
+            std::unordered_set<int>::const_iterator g (std::next (f, 1));
+
+            while (std::next (g, 1) != _free_fields.end())
+            {
+              std::unordered_set<int>::const_iterator h (std::next (g, 1));
+
+              do
+              {
+                sucs.emplace_back (*this);
+
+                sucs.back().put ({*f, *g, *h});
+
+                ++h;
+              }
+              while (h != _free_fields.end());
+
+              ++g;
+            }
+
+            ++f;
+          }
+        }
+
+        return sucs;
+      }
+
     private:
       friend class show;
 
@@ -224,7 +314,14 @@ namespace
           : 2;
       }
 
-      std::vector<int> sizes_of_components (std::vector<int> fields)
+      std::vector<int> sizes_of_components_of (player::player player) const
+      {
+        std::vector<int> sizes (sizes_of_components (_taken[player]));
+        std::sort (sizes.begin(), sizes.end(), std::greater<int>());
+        return sizes;
+      }
+
+      std::vector<int> sizes_of_components (std::vector<int> fields) const
       {
         std::stack<int> stack;
         std::vector<bool> seen (point::plane_size (_size), 0);
@@ -326,27 +423,13 @@ namespace
 
 int main()
 {
-  board::board b (3);
+  board::board b (2);
 
-  std::cout << board::show (b);
+  b.put ({3});
+  b.put ({0,1});
 
-  b.put ({4});
-
-  std::cout << board::show (b);
-
-  b.put ({9,10});
-
-  std::cout << board::show (b);
-
-  b.put ({13,11});
-
-  std::cout << board::show (b);
-
-  b.put ({15,8});
-
-  std::cout << board::show (b);
-
-  b.put ({5,6});
-
-  std::cout << board::show (b);
+  for (board::board const& s : b.successors())
+  {
+    std::cout << s;
+  }
 }
