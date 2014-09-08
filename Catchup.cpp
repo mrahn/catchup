@@ -141,8 +141,7 @@ namespace
         }
 
         _to_move = other (_to_move);
-        std::vector<int> const sizes (sizes_of_components (fields));
-        int const csize (*std::max_element (sizes.begin(), sizes.end()));
+        int const csize (max_sizes_of_components (fields));
         _available_stones = std::min
           ( point::plane_size (SIZE) - _depth
           , (_high_water > 0 && csize > _high_water && _depth > 1) ? 3 : 2
@@ -286,6 +285,46 @@ namespace
         }
 
         return sizes;
+      }
+
+      //! \todo unify with sizes_of_components
+      int max_sizes_of_components (std::vector<int> fields) const
+      {
+        std::stack<int> stack;
+        std::vector<bool> seen (point::plane_size (SIZE), false);
+        int max (0);
+
+        for (int field : fields)
+        {
+          if (!seen[field])
+          {
+            int size (0);
+            player::player const player (_stone[field]);
+
+            stack.push (field);
+            ++size;
+            seen[field] = true;
+
+            while (!stack.empty())
+            {
+              int const f (stack.top()); stack.pop();
+
+              for (int n : _neighbour[f])
+              {
+                if (_stone[n] == player && !seen[n])
+                {
+                  stack.push (n);
+                  ++size;
+                  seen[n] = true;
+                }
+              }
+            }
+
+            max = std::max (max, size);
+          }
+        }
+
+        return max;
       }
 
       std::vector<int> taken (player::player player) const
