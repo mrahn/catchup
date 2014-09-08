@@ -6,7 +6,6 @@
 #include <map>
 #include <stack>
 #include <tuple>
-#include <unordered_set>
 #include <vector>
 
 namespace
@@ -121,21 +120,6 @@ namespace
   {
     template<int SIZE> class show;
 
-    namespace
-    {
-      std::unordered_set<int> full (int n)
-      {
-        std::unordered_set<int> s;
-
-        for (int i (0); i < n; ++i)
-        {
-          s.emplace (i);
-        }
-
-        return s;
-      }
-    }
-
     template<int SIZE>
     class board
     {
@@ -145,7 +129,6 @@ namespace
         , _available_stones (std::min (point::plane_size (SIZE), 1))
         , _to_move (player::Blue)
         , _high_water (0)
-        , _free_fields (full (point::plane_size (SIZE)))
         , _stone (point::plane_size (SIZE), player::None)
       {}
 
@@ -154,7 +137,6 @@ namespace
         for (int field : fields)
         {
           _stone[field] = _to_move;
-          _free_fields.erase (field);
           ++_depth;
         }
 
@@ -170,17 +152,27 @@ namespace
 
       player::player winner() const
       {
-        if (_available_stones > 2 && _free_fields.size() > 2)
+        std::vector<int> free_fields;
+
+        for (int field (0); field < point::plane_size (SIZE); ++field)
         {
-          std::unordered_set<int>::const_iterator f (_free_fields.begin());
-
-          while (std::next (f, 2) != _free_fields.end())
+          if (_stone[field] == player::None)
           {
-            std::unordered_set<int>::const_iterator g (std::next (f, 1));
+            free_fields.emplace_back (field);
+          }
+        }
 
-            while (std::next (g, 1) != _free_fields.end())
+        if (_available_stones > 2 && free_fields.size() > 2)
+        {
+          std::vector<int>::const_iterator f (free_fields.begin());
+
+          while (std::next (f, 2) != free_fields.end())
+          {
+            std::vector<int>::const_iterator g (std::next (f, 1));
+
+            while (std::next (g, 1) != free_fields.end())
             {
-              std::unordered_set<int>::const_iterator h (std::next (g, 1));
+              std::vector<int>::const_iterator h (std::next (g, 1));
 
               do
               {
@@ -195,7 +187,7 @@ namespace
 
                 ++h;
               }
-              while (h != _free_fields.end());
+              while (h != free_fields.end());
 
               ++g;
             }
@@ -204,13 +196,13 @@ namespace
           }
         }
 
-        if (_available_stones > 1 && _free_fields.size() > 1)
+        if (_available_stones > 1 && free_fields.size() > 1)
         {
-          std::unordered_set<int>::const_iterator f (_free_fields.begin());
+          std::vector<int>::const_iterator f (free_fields.begin());
 
-          while (std::next (f, 1) != _free_fields.end())
+          while (std::next (f, 1) != free_fields.end())
           {
-            std::unordered_set<int>::const_iterator g (std::next (f, 1));
+            std::vector<int>::const_iterator g (std::next (f, 1));
 
             do
             {
@@ -225,13 +217,13 @@ namespace
 
               ++g;
             }
-            while (g != _free_fields.end());
+            while (g != free_fields.end());
 
             ++f;
           }
         }
 
-        for (int f : _free_fields)
+        for (int f : free_fields)
         {
           board<SIZE> board (*this);
 
@@ -255,7 +247,6 @@ namespace
       int _available_stones;
       player::player _to_move;
       int _high_water;
-      std::unordered_set<int> _free_fields;
       std::vector<player::player> _stone;
 
       std::vector<int> sizes_of_components (std::vector<int> fields) const
@@ -465,7 +456,7 @@ int main()
   board.put ({4});
   board.put ({5,8});
   board.put ({6,14});
-  //  board.put ({9,12});
+  // board.put ({9,12});
   //  board.put ({1,2,10});
 
   std::cout << board::show<3> (board);
