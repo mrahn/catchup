@@ -182,7 +182,6 @@ namespace
         , _to_move (player::Blue)
         , _high_water (0)
         , _increased_size_of_largest_group (false)
-        , _neighbour (neighbours (SIZE))
         , _free_fields (full (point::plane_size (SIZE)))
         , _stone (point::plane_size (SIZE), player::None)
         , _taken (2)
@@ -227,13 +226,14 @@ namespace
       }
 
     private:
+      static std::vector<std::vector<int>> const _neighbour;
+
       friend class show<SIZE>;
 
       int _depth;
       player::player _to_move;
       int _high_water;
       bool _increased_size_of_largest_group;
-      std::vector<std::vector<int>> const _neighbour;
       std::unordered_set<int> _free_fields;
       std::vector<player::player> _stone;
       std::vector<std::vector<int>> _taken;
@@ -388,6 +388,10 @@ namespace
         return sucs;
       }
     };
+
+    template<int SIZE>
+    std::vector<std::vector<int>>
+    const board<SIZE>::_neighbour {neighbours (SIZE)};
 
     template<int SIZE>
     class show
