@@ -251,46 +251,6 @@ namespace
       int _high_water;
       std::vector<player::player> _stone;
 
-      std::vector<int> sizes_of_components (std::vector<int> fields) const
-      {
-        std::stack<int> stack;
-        std::vector<bool> seen (point::plane_size (SIZE), false);
-        std::vector<int> sizes;
-
-        for (int field : fields)
-        {
-          if (!seen[field])
-          {
-            int size (0);
-            player::player const player (_stone[field]);
-
-            stack.push (field);
-            ++size;
-            seen[field] = true;
-
-            while (!stack.empty())
-            {
-              int const f (stack.top()); stack.pop();
-
-              for (int n : _neighbour[f])
-              {
-                if (_stone[n] == player && !seen[n])
-                {
-                  stack.push (n);
-                  ++size;
-                  seen[n] = true;
-                }
-              }
-            }
-
-            sizes.emplace_back (size);
-          }
-        }
-
-        return sizes;
-      }
-
-      //! \todo unify with sizes_of_components
       int max_sizes_of_components (std::vector<int> fields) const
       {
         std::stack<int> stack;
@@ -330,24 +290,41 @@ namespace
         return max;
       }
 
-      std::vector<int> taken (player::player player) const
+      std::vector<int> sizes_of_components_of (player::player player) const
       {
-        std::vector<int> t;
+        std::stack<int> stack;
+        std::vector<bool> seen (point::plane_size (SIZE), false);
+        std::vector<int> sizes;
 
         for (int field (0); field < point::plane_size (SIZE); ++field)
         {
-          if (_stone[field] == player)
+          if (!seen[field] && _stone[field] == player)
           {
-            t.emplace_back (field);
+            int size (0);
+            player::player const player (_stone[field]);
+
+            stack.push (field);
+            ++size;
+            seen[field] = true;
+
+            while (!stack.empty())
+            {
+              int const f (stack.top()); stack.pop();
+
+              for (int n : _neighbour[f])
+              {
+                if (_stone[n] == player && !seen[n])
+                {
+                  stack.push (n);
+                  ++size;
+                  seen[n] = true;
+                }
+              }
+            }
+
+            sizes.emplace_back (size);
           }
         }
-
-        return t;
-      }
-
-      std::vector<int> sizes_of_components_of (player::player player) const
-      {
-        std::vector<int> sizes (sizes_of_components (taken (player)));
         std::sort (sizes.begin(), sizes.end(), std::greater<int>());
         return sizes;
       }
