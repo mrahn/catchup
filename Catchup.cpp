@@ -151,90 +151,93 @@ namespace
 
       player::player winner() const
       {
-        std::vector<int> free_fields;
-
-        for (int field (0); field < point::plane_size (SIZE); ++field)
-        {
-          if (_stone[field] == player::None)
-          {
-            free_fields.emplace_back (field);
-          }
+#define NEXT_FREE_FIELD(_var)                                           \
+        while (  _var < point::plane_size (SIZE)                        \
+              && _stone[_var] != player::None                           \
+              )                                                         \
+        {                                                               \
+          ++_var;                                                       \
         }
-
         if (_available_stones > 2)
         {
-          std::vector<int>::const_iterator f (free_fields.begin());
+          int f (0); NEXT_FREE_FIELD (f);
 
-          while (std::next (f, 2) != free_fields.end())
+          while (f + 2 < point::plane_size (SIZE))
           {
-            std::vector<int>::const_iterator g (std::next (f, 1));
+            int g (f + 1); NEXT_FREE_FIELD (g);
 
-            while (std::next (g, 1) != free_fields.end())
+            while (g + 1 < point::plane_size (SIZE))
             {
-              std::vector<int>::const_iterator h (std::next (g, 1));
+              int h (g + 1); NEXT_FREE_FIELD (h);
 
-              do
+              while (h < point::plane_size (SIZE))
               {
                 board<SIZE> board (*this);
 
-                board.put ({*f, *g, *h});
+                board.put ({f, g, h});
 
                 if (board.winner() == _to_move)
                 {
                   return _to_move;
                 }
 
-                ++h;
+                ++h; NEXT_FREE_FIELD (h);
               }
-              while (h != free_fields.end());
 
-              ++g;
+              ++g; NEXT_FREE_FIELD (g);
             }
 
-            ++f;
+            ++f; NEXT_FREE_FIELD (f);
           }
         }
 
         if (_available_stones > 1)
         {
-          std::vector<int>::const_iterator f (free_fields.begin());
+          int f (0); NEXT_FREE_FIELD (f);
 
-          while (std::next (f, 1) != free_fields.end())
+          while (f + 1 < point::plane_size (SIZE))
           {
-            std::vector<int>::const_iterator g (std::next (f, 1));
+            int g (f + 1); NEXT_FREE_FIELD (g);
 
-            do
+            while (g < point::plane_size (SIZE))
             {
               board<SIZE> board (*this);
 
-              board.put ({*f, *g});
+              board.put ({f, g});
 
               if (board.winner() == _to_move)
               {
                 return _to_move;
               }
 
-              ++g;
+              ++g; NEXT_FREE_FIELD (g);
             }
-            while (g != free_fields.end());
 
-            ++f;
+            ++f; NEXT_FREE_FIELD (f);
           }
         }
 
-        for (int f : free_fields)
         {
-          board<SIZE> board (*this);
+          int f (0); NEXT_FREE_FIELD (f);
 
-          board.put ({f});
-
-          if (board.winner() == _to_move)
+          while (f < point::plane_size (SIZE))
           {
-            return _to_move;
+            board<SIZE> board (*this);
+
+            board.put ({f});
+
+            if (board.winner() == _to_move)
+            {
+              return _to_move;
+            }
+
+            ++f; NEXT_FREE_FIELD (f);
           }
         }
 
         return _available_stones ? player::other (_to_move) : in_front();
+
+#undef NEXT_FREE_FIELD
       }
 
     private:
