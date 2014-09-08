@@ -170,9 +170,74 @@ namespace
 
       player::player winner() const
       {
-        for (board<SIZE> const& suc : successors())
+        if (_available_stones > 2 && _free_fields.size() > 2)
         {
-          if (suc.winner() == _to_move)
+          std::unordered_set<int>::const_iterator f (_free_fields.begin());
+
+          while (std::next (f, 2) != _free_fields.end())
+          {
+            std::unordered_set<int>::const_iterator g (std::next (f, 1));
+
+            while (std::next (g, 1) != _free_fields.end())
+            {
+              std::unordered_set<int>::const_iterator h (std::next (g, 1));
+
+              do
+              {
+                board<SIZE> board (*this);
+
+                board.put ({*f, *g, *h});
+
+                if (board.winner() == _to_move)
+                {
+                  return _to_move;
+                }
+
+                ++h;
+              }
+              while (h != _free_fields.end());
+
+              ++g;
+            }
+
+            ++f;
+          }
+        }
+
+        if (_available_stones > 1 && _free_fields.size() > 1)
+        {
+          std::unordered_set<int>::const_iterator f (_free_fields.begin());
+
+          while (std::next (f, 1) != _free_fields.end())
+          {
+            std::unordered_set<int>::const_iterator g (std::next (f, 1));
+
+            do
+            {
+              board<SIZE> board (*this);
+
+              board.put ({*f, *g});
+
+              if (board.winner() == _to_move)
+              {
+                return _to_move;
+              }
+
+              ++g;
+            }
+            while (g != _free_fields.end());
+
+            ++f;
+          }
+        }
+
+        for (int f : _free_fields)
+        {
+          board<SIZE> board (*this);
+
+          board.put ({f});
+
+          if (board.winner() == _to_move)
           {
             return _to_move;
           }
@@ -284,71 +349,6 @@ namespace
         }
 
         abort();
-      }
-
-      std::vector<board<SIZE>> successors() const
-      {
-        std::vector<board<SIZE>> sucs;
-
-        if (_available_stones > 2 && _free_fields.size() > 2)
-        {
-          std::unordered_set<int>::const_iterator f (_free_fields.begin());
-
-          while (std::next (f, 2) != _free_fields.end())
-          {
-            std::unordered_set<int>::const_iterator g (std::next (f, 1));
-
-            while (std::next (g, 1) != _free_fields.end())
-            {
-              std::unordered_set<int>::const_iterator h (std::next (g, 1));
-
-              do
-              {
-                sucs.emplace_back (*this);
-
-                sucs.back().put ({*f, *g, *h});
-
-                ++h;
-              }
-              while (h != _free_fields.end());
-
-              ++g;
-            }
-
-            ++f;
-          }
-        }
-
-        if (_available_stones > 1 && _free_fields.size() > 1)
-        {
-          std::unordered_set<int>::const_iterator f (_free_fields.begin());
-
-          while (std::next (f, 1) != _free_fields.end())
-          {
-            std::unordered_set<int>::const_iterator g (std::next (f, 1));
-
-            do
-            {
-              sucs.emplace_back (*this);
-
-              sucs.back().put ({*f, *g});
-
-              ++g;
-            }
-            while (g != _free_fields.end());
-
-            ++f;
-          }
-        }
-
-        for (int f : _free_fields)
-        {
-          sucs.emplace_back (*this);
-
-          sucs.back().put ({f});
-        }
-
-        return sucs;
       }
     };
 
