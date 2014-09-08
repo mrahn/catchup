@@ -119,7 +119,7 @@ namespace
 
   namespace board
   {
-    class show;
+    template<int SIZE> class show;
 
     namespace
     {
@@ -173,18 +173,18 @@ namespace
       }
     }
 
+    template<int SIZE>
     class board
     {
     public:
-      board (int size)
-        : _size (size)
-        , _depth (0)
+      board()
+        : _depth (0)
         , _to_move (player::Blue)
         , _high_water (0)
         , _increased_size_of_largest_group (false)
-        , _neighbour (neighbours (_size))
-        , _free_fields (full (point::plane_size (_size)))
-        , _stone (point::plane_size (_size), player::None)
+        , _neighbour (neighbours (SIZE))
+        , _free_fields (full (point::plane_size (SIZE)))
+        , _stone (point::plane_size (SIZE), player::None)
         , _taken (2)
       {}
 
@@ -208,14 +208,14 @@ namespace
 
       player::player winner() const
       {
-        std::vector<board> const sucs (successors());
+        std::vector<board<SIZE>> const sucs (successors());
 
         if (sucs.empty())
         {
           return in_front();
         }
 
-        for (board const& suc : sucs)
+        for (board<SIZE> const& suc : sucs)
         {
           if (suc.winner() == _to_move)
           {
@@ -227,9 +227,8 @@ namespace
       }
 
     private:
-      friend class show;
+      friend class show<SIZE>;
 
-      int const _size;
       int _depth;
       player::player _to_move;
       int _high_water;
@@ -249,7 +248,7 @@ namespace
       std::vector<int> sizes_of_components (std::vector<int> fields) const
       {
         std::stack<int> stack;
-        std::vector<bool> seen (point::plane_size (_size), false);
+        std::vector<bool> seen (point::plane_size (SIZE), false);
         std::vector<int> sizes;
 
         for (int field : fields)
@@ -324,9 +323,9 @@ namespace
         abort();
       }
 
-      std::vector<board> successors() const
+      std::vector<board<SIZE>> successors() const
       {
-        std::vector<board> sucs;
+        std::vector<board<SIZE>> sucs;
 
         if (available_stones() > 2 && _free_fields.size() > 2)
         {
@@ -390,10 +389,11 @@ namespace
       }
     };
 
+    template<int SIZE>
     class show
     {
     public:
-      show (board const& board)
+      show (board<SIZE> const& board)
         : _board (board)
       {}
       std::ostream& operator() (std::ostream& os) const
@@ -405,7 +405,7 @@ namespace
 
         int line_x (0);
         int k (0);
-        int prefix (_board._size - 1);
+        int prefix (SIZE - 1);
         int delta (-1);
 
         auto const print_prefix ([&os, &prefix, &delta]
@@ -421,9 +421,9 @@ namespace
 
         print_prefix();
 
-        for (point::point const& p : point::plane (_board._size))
+        for (point::point const& p : point::plane (SIZE))
         {
-          int const x (point::x (p) + _board._size - 1);
+          int const x (point::x (p) + SIZE - 1);
 
           if (x != line_x)
           {
@@ -441,9 +441,10 @@ namespace
       }
 
     private:
-      board const& _board;
+      board<SIZE> const& _board;
     };
-    std::ostream& operator<< (std::ostream& os, show const& s)
+    template<int SIZE>
+    std::ostream& operator<< (std::ostream& os, show<SIZE> const& s)
     {
       return s (os);
     }
@@ -452,8 +453,14 @@ namespace
 
 int main()
 {
-  board::board board (2);
+  board::board<3> board;
 
-  std::cout << board::show (board);
+  board.put ({4});
+  board.put ({5,8});
+  board.put ({6,14});
+  //  board.put ({9,12});
+  //  board.put ({1,2,10});
+
+  std::cout << board::show<3> (board);
   std::cout << player::show (board.winner()) << std::endl;
 }
