@@ -123,43 +123,6 @@ namespace
 
     namespace
     {
-      std::map<point::point, int>
-        numbered (std::vector<point::point> const& ps)
-      {
-        std::map<point::point, int> m;
-        int k (0);
-
-        for (point::point const& p : ps)
-        {
-          m.emplace (p, k++);
-        }
-
-        return m;
-      }
-
-      std::vector<std::vector<int>> neighbours (int size)
-      {
-        std::vector<point::point> const points (point::plane (size));
-        std::map<point::point, int> const id_by_point (numbered (points));
-        std::vector<std::vector<int>> ns (points.size());
-        int k (0);
-
-        for (point::point const& p : points)
-        {
-          std::vector<int>& n (ns[k++]);
-
-          for (point::point const& q : points)
-          {
-            if (point::distance (p, q) == 1)
-            {
-              n.emplace_back (id_by_point.at (q));
-            }
-          }
-        }
-
-        return ns;
-      }
-
       std::unordered_set<int> full (int n)
       {
         std::unordered_set<int> s;
@@ -388,6 +351,46 @@ namespace
         return sucs;
       }
     };
+
+    namespace
+    {
+      std::map<point::point, int>
+        numbered (std::vector<point::point> const& ps)
+      {
+        std::map<point::point, int> m;
+        int k (0);
+
+        for (point::point const& p : ps)
+        {
+          m.emplace (p, k++);
+        }
+
+        return m;
+      }
+
+      std::vector<std::vector<int>> neighbours (int size)
+      {
+        std::vector<point::point> const points (point::plane (size));
+        std::map<point::point, int> const id_by_point (numbered (points));
+        std::vector<std::vector<int>> ns (points.size());
+        int k (0);
+
+        for (point::point const& p : points)
+        {
+          std::vector<int>& n (ns[k++]);
+
+          for (point::point const& q : points)
+          {
+            if (point::distance (p, q) == 1)
+            {
+              n.emplace_back (id_by_point.at (q));
+            }
+          }
+        }
+
+        return ns;
+      }
+    }
 
     template<int SIZE>
     std::vector<std::vector<int>>
