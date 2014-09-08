@@ -142,9 +142,9 @@ namespace
     public:
       board()
         : _depth (0)
+        , _available_stones (std::min (point::plane_size (SIZE), 1))
         , _to_move (player::Blue)
         , _high_water (0)
-        , _increased_size_of_largest_group (false)
         , _free_fields (full (point::plane_size (SIZE)))
         , _stone (point::plane_size (SIZE), player::None)
       {}
@@ -161,21 +161,16 @@ namespace
         _to_move = other (_to_move);
         std::vector<int> const sizes (sizes_of_components (fields));
         int const csize (*std::max_element (sizes.begin(), sizes.end()));
-        _increased_size_of_largest_group
-          = (_high_water > 0 && csize > _high_water);
+        _available_stones = std::min
+          ( point::plane_size (SIZE) - _depth
+          , (_high_water > 0 && csize > _high_water && _depth > 1) ? 3 : 2
+          );
         _high_water = std::max (_high_water, csize);
       }
 
       player::player winner() const
       {
-        std::vector<board<SIZE>> const sucs (successors());
-
-        if (sucs.empty())
-        {
-          return in_front();
-        }
-
-        for (board<SIZE> const& suc : sucs)
+        for (board<SIZE> const& suc : successors())
         {
           if (suc.winner() == _to_move)
           {
@@ -183,7 +178,7 @@ namespace
           }
         }
 
-        return player::other (_to_move);
+        return _available_stones ? player::other (_to_move) : in_front();
       }
 
     private:
@@ -192,18 +187,11 @@ namespace
       friend class show<SIZE>;
 
       int _depth;
+      int _available_stones;
       player::player _to_move;
       int _high_water;
-      bool _increased_size_of_largest_group;
       std::unordered_set<int> _free_fields;
       std::vector<player::player> _stone;
-
-      int available_stones() const
-      {
-        return _depth == 0 ? 1
-          : (_increased_size_of_largest_group && _depth > 1) ? 3
-          : 2;
-      }
 
       std::vector<int> sizes_of_components (std::vector<int> fields) const
       {
@@ -302,7 +290,7 @@ namespace
       {
         std::vector<board<SIZE>> sucs;
 
-        if (available_stones() > 2 && _free_fields.size() > 2)
+        if (_available_stones > 2 && _free_fields.size() > 2)
         {
           std::unordered_set<int>::const_iterator f (_free_fields.begin());
 
@@ -331,7 +319,7 @@ namespace
           }
         }
 
-        if (available_stones() > 1 && _free_fields.size() > 1)
+        if (_available_stones > 1 && _free_fields.size() > 1)
         {
           std::unordered_set<int>::const_iterator f (_free_fields.begin());
 
@@ -419,7 +407,7 @@ namespace
       {
         os << "to_move " << player::show (_board._to_move)
            << ", high_water " << _board._high_water
-           << ", stones " << _board.available_stones()
+           << ", stones " << _board._available_stones
            << "\n";
 
         int line_x (0);
