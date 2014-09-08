@@ -162,7 +162,7 @@ namespace
           }
         }
 
-        if (_available_stones > 2 && free_fields.size() > 2)
+        if (_available_stones > 2)
         {
           std::vector<int>::const_iterator f (free_fields.begin());
 
@@ -196,7 +196,7 @@ namespace
           }
         }
 
-        if (_available_stones > 1 && free_fields.size() > 1)
+        if (_available_stones > 1)
         {
           std::vector<int>::const_iterator f (free_fields.begin());
 
