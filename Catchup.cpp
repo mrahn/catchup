@@ -147,7 +147,6 @@ namespace
         , _increased_size_of_largest_group (false)
         , _free_fields (full (point::plane_size (SIZE)))
         , _stone (point::plane_size (SIZE), player::None)
-        , _taken (2)
       {}
 
       void put (std::vector<int> fields)
@@ -155,7 +154,6 @@ namespace
         for (int field : fields)
         {
           _stone[field] = _to_move;
-          _taken[_to_move].emplace_back (field);
           _free_fields.erase (field);
           ++_depth;
         }
@@ -199,7 +197,6 @@ namespace
       bool _increased_size_of_largest_group;
       std::unordered_set<int> _free_fields;
       std::vector<player::player> _stone;
-      std::vector<std::vector<int>> _taken;
 
       int available_stones() const
       {
@@ -247,9 +244,24 @@ namespace
         return sizes;
       }
 
+      std::vector<int> taken (player::player player) const
+      {
+        std::vector<int> t;
+
+        for (int field (0); field < point::plane_size (SIZE); ++field)
+        {
+          if (_stone[field] == player)
+          {
+            t.emplace_back (field);
+          }
+        }
+
+        return t;
+      }
+
       std::vector<int> sizes_of_components_of (player::player player) const
       {
-        std::vector<int> sizes (sizes_of_components (_taken[player]));
+        std::vector<int> sizes (sizes_of_components (taken (player)));
         std::sort (sizes.begin(), sizes.end(), std::greater<int>());
         return sizes;
       }
