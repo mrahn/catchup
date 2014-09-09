@@ -14,6 +14,19 @@ namespace
   {
     typedef std::tuple<int, int, int> point;
 
+    int x (point const&);
+    int y (point const&);
+    int z (point const&);
+    int plane_size (int size);
+    std::vector<point> plane (int size);
+    int distance (point const&, point const&);
+    point rotate60 (point const&);
+    point rotate300 (point const&);
+    point mirror (point const&, int axis);
+  }
+
+  namespace point
+  {
     int x (point const& p) { return std::get<0> (p); }
     int y (point const& p) { return std::get<1> (p); }
     int z (point const& p) { return std::get<2> (p); }
