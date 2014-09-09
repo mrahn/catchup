@@ -32,7 +32,6 @@ namespace
     int x (point const&);
     int y (point const&);
     int z (point const&);
-    constexpr int plane_size (int size);
     std::vector<point> plane (int size);
     int distance (point const&, point const&);
     point rotate60 (point const&);
@@ -58,6 +57,8 @@ namespace
 
   namespace board
   {
+    constexpr int num_fields (int size);
+
     template<int SIZE> class show;
 
     template<int SIZE>
@@ -86,7 +87,7 @@ namespace
       int _available_stones;
       player::player _to_move;
       int _high_water;
-      player::player _stone[point::plane_size (SIZE)];
+      player::player _stone[num_fields (SIZE)];
 
       int max_sizes_of_components (std::vector<int> fields) const;
       player::player in_front() const;
@@ -98,11 +99,6 @@ namespace
     int x (point const& p) { return std::get<0> (p); }
     int y (point const& p) { return std::get<1> (p); }
     int z (point const& p) { return std::get<2> (p); }
-
-    constexpr int plane_size (int size)
-    {
-      return 3 * size * (size - 1) + (size < 1 ? size : 1);
-    }
 
     std::vector<point> plane (int size)
     {
@@ -178,15 +174,20 @@ namespace
 
   namespace board
   {
+    constexpr int num_fields (int size)
+    {
+      return 3 * size * (size - 1) + (size < 1 ? size : 1);
+    }
+
     template<int SIZE>
     board<SIZE>::board()
       : _depth (0)
-      , _available_stones (std::min (point::plane_size (SIZE), 1))
+      , _available_stones (std::min (num_fields (SIZE), 1))
       , _to_move (player::Blue)
       , _high_water (0)
       , _stone()
     {
-      std::fill (_stone, _stone + point::plane_size (SIZE), player::None);
+      std::fill (_stone, _stone + num_fields (SIZE), player::None);
     }
 
     template<int SIZE>
@@ -201,7 +202,7 @@ namespace
       _to_move = other (_to_move);
       int const csize (max_sizes_of_components (fields));
       _available_stones = std::min
-        ( point::plane_size (SIZE) - _depth
+        ( num_fields (SIZE) - _depth
         , (_high_water > 0 && csize > _high_water && _depth > 1) ? 3 : 2
         );
       _high_water = std::max (_high_water, csize);
@@ -226,7 +227,7 @@ namespace
     player::player board<SIZE>::winner()
     {
 #define NEXT_FREE_FIELD(_var)                   \
-      while (  _var < point::plane_size (SIZE)  \
+      while (  _var < num_fields (SIZE)         \
             && _stone[_var] != player::None     \
             )                                   \
       {                                         \
@@ -240,15 +241,15 @@ namespace
       {
         int f (0); NEXT_FREE_FIELD (f);
 
-        while (f + 2 < point::plane_size (SIZE))
+        while (f + 2 < num_fields (SIZE))
         {
           int g (f + 1); NEXT_FREE_FIELD (g);
 
-          while (g + 1 < point::plane_size (SIZE))
+          while (g + 1 < num_fields (SIZE))
           {
             int h (g + 1); NEXT_FREE_FIELD (h);
 
-            while (h < point::plane_size (SIZE))
+            while (h < num_fields (SIZE))
             {
               put ({f, g, h});
 
@@ -275,11 +276,11 @@ namespace
       {
         int f (0); NEXT_FREE_FIELD (f);
 
-        while (f + 1 < point::plane_size (SIZE))
+        while (f + 1 < num_fields (SIZE))
         {
           int g (f + 1); NEXT_FREE_FIELD (g);
 
-          while (g < point::plane_size (SIZE))
+          while (g < num_fields (SIZE))
           {
             put ({f, g});
 
@@ -302,7 +303,7 @@ namespace
       {
         int f (0); NEXT_FREE_FIELD (f);
 
-        while (f < point::plane_size (SIZE))
+        while (f < num_fields (SIZE))
         {
           put ({f});
 
@@ -327,21 +328,18 @@ namespace
     template<int SIZE>
     void board<SIZE>::normal()
     {
-      player::player minimum[point::plane_size (SIZE)];
+      player::player minimum[num_fields (SIZE)];
 
-      std::copy (_stone, _stone + point::plane_size (SIZE), minimum);
+      std::copy (_stone, _stone + num_fields (SIZE), minimum);
 
       for (std::vector<int> const& translation : _translations)
       {
-        player::player translated[point::plane_size (SIZE)];
+        player::player translated[num_fields (SIZE)];
 
         bool greater (false);
         bool smaller (false);
 
-        for ( int field (0)
-            ; field < point::plane_size (SIZE) && !greater
-            ; ++field
-            )
+        for (int field (0); field < num_fields (SIZE) && !greater; ++field)
         {
           translated[field] = _stone[translation[field]];
 
@@ -351,22 +349,22 @@ namespace
 
         if (smaller)
         {
-          std::copy (translated, translated + point::plane_size (SIZE), minimum);
+          std::copy (translated, translated + num_fields (SIZE), minimum);
         }
       }
 
-      std::copy (minimum, minimum + point::plane_size (SIZE), _stone);
+      std::copy (minimum, minimum + num_fields (SIZE), _stone);
     }
 
     template<int SIZE>
     int board<SIZE>::max_sizes_of_components (std::vector<int> fields) const
     {
-      int stack[point::plane_size (SIZE)];
+      int stack[num_fields (SIZE)];
       int top (0);
-      bool seen[point::plane_size (SIZE)];
+      bool seen[num_fields (SIZE)];
       int max (0);
 
-      std::fill (seen, seen + point::plane_size (SIZE), false);
+      std::fill (seen, seen + num_fields (SIZE), false);
 
       for (int field : fields)
       {
@@ -404,15 +402,15 @@ namespace
     template<int SIZE>
     player::player board<SIZE>::in_front() const
     {
-      int stack[2][point::plane_size (SIZE)];
+      int stack[2][num_fields (SIZE)];
       int top[2] = {0,0};
-      bool seen[2][point::plane_size (SIZE)];
+      bool seen[2][num_fields (SIZE)];
       std::vector<std::vector<int>> sizes (2);
 
-      std::fill (seen[0], seen[0] + point::plane_size (SIZE), false);
-      std::fill (seen[1], seen[1] + point::plane_size (SIZE), false);
+      std::fill (seen[0], seen[0] + num_fields (SIZE), false);
+      std::fill (seen[1], seen[1] + num_fields (SIZE), false);
 
-      for (int field (0); field < point::plane_size (SIZE); ++field)
+      for (int field (0); field < num_fields (SIZE); ++field)
       {
         player::player const player (_stone[field]);
 
@@ -501,7 +499,7 @@ namespace
       {
         std::vector<point::point> const points (point::plane (size));
         std::map<point::point, int> const id_by_point (numbered (points));
-        std::vector<std::vector<int>> ns (point::plane_size (size));
+        std::vector<std::vector<int>> ns (num_fields (size));
         int k (0);
 
         for (point::point const& p : points)
@@ -526,11 +524,11 @@ namespace
         std::map<point::point, int> const id_by_point (numbered (points));
 
         std::vector<std::vector<int>> ts
-          (11, std::vector<int> (point::plane_size (size)));
+          (11, std::vector<int> (num_fields (size)));
 
         for (int axis (1); axis < 6; ++axis)
         {
-          for (int field (0); field < point::plane_size (size); ++field)
+          for (int field (0); field < num_fields (size); ++field)
           {
             ts[axis - 1][field] =
               id_by_point.at (point::mirror (points[field], axis));
@@ -539,7 +537,7 @@ namespace
 
         for (int axis (0); axis < 6; ++axis)
         {
-          for (int field (0); field < point::plane_size (size); ++field)
+          for (int field (0); field < num_fields (size); ++field)
           {
             ts[axis + 5][field] =
               id_by_point.at (point::mirror (points[id_by_point.at (point::rotate60 (points[field]))], axis));
@@ -620,7 +618,6 @@ int main()
   board::board<3> board;
   board.put ({4});
   board.put ({5,8});
-  board.put ({6,14});
   board.normal();
 
   std::cout << board::show<3> (board) << std::endl;
