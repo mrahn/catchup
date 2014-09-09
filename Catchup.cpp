@@ -149,7 +149,20 @@ namespace
         _high_water = std::max (_high_water, csize);
       }
 
-      player::player winner() const
+      void unput (std::vector<int> fields, int available_stones, int high_water)
+      {
+        for (int field : fields)
+        {
+          _stone[field] = player::None;
+          --_depth;
+        }
+
+        _to_move = other (_to_move);
+        _available_stones = available_stones;
+        _high_water = high_water;
+      }
+
+      player::player winner()
       {
 #define NEXT_FREE_FIELD(_var)                                           \
         while (  _var < point::plane_size (SIZE)                        \
@@ -158,6 +171,10 @@ namespace
         {                                                               \
           ++_var;                                                       \
         }
+
+        int const available_stones (_available_stones);
+        int const high_water (_high_water);
+
         if (_available_stones > 2)
         {
           int f (0); NEXT_FREE_FIELD (f);
@@ -172,11 +189,13 @@ namespace
 
               while (h < point::plane_size (SIZE))
               {
-                board<SIZE> board (*this);
+                put ({f, g, h});
 
-                board.put ({f, g, h});
+                player::player const won (winner());
 
-                if (board.winner() == _to_move)
+                unput ({f, g, h}, available_stones, high_water);
+
+                if (won == _to_move)
                 {
                   return _to_move;
                 }
@@ -201,11 +220,13 @@ namespace
 
             while (g < point::plane_size (SIZE))
             {
-              board<SIZE> board (*this);
+              put ({f, g});
 
-              board.put ({f, g});
+              player::player const won (winner());
 
-              if (board.winner() == _to_move)
+              unput ({f, g}, available_stones, high_water);
+
+              if (won == _to_move)
               {
                 return _to_move;
               }
@@ -222,11 +243,13 @@ namespace
 
           while (f < point::plane_size (SIZE))
           {
-            board<SIZE> board (*this);
+            put ({f});
 
-            board.put ({f});
+            player::player const won (winner());
 
-            if (board.winner() == _to_move)
+            unput ({f}, available_stones, high_water);
+
+            if (won == _to_move)
             {
               return _to_move;
             }
