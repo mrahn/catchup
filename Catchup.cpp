@@ -405,10 +405,13 @@ namespace
       int stack[2][num_fields (SIZE)];
       int top[2] = {0,0};
       bool seen[2][num_fields (SIZE)];
-      std::vector<std::vector<int>> sizes (2);
+      int sizes[2][num_fields (SIZE)];
+      int pos[2] = {0,0};
 
       std::fill (seen[0], seen[0] + num_fields (SIZE), false);
       std::fill (seen[1], seen[1] + num_fields (SIZE), false);
+      std::fill (sizes[0], sizes[0] + num_fields (SIZE), 0);
+      std::fill (sizes[1], sizes[1] + num_fields (SIZE), 0);
 
       for (int field (0); field < num_fields (SIZE); ++field)
       {
@@ -437,41 +440,42 @@ namespace
             }
           }
 
-          sizes[player].emplace_back (size);
+          sizes[player][pos[player]++] = size;
         }
       }
 
       for (player::player player : {player::Blue, player::Orange})
       {
         std::sort
-          (sizes[player].begin(), sizes[player].end(), std::greater<int>());
+          (sizes[player], sizes[player] + pos[player], std::greater<int>());
       }
 
-      std::vector<int>::const_iterator b_pos (sizes[player::Blue].begin());
-      std::vector<int>::const_iterator o_pos (sizes[player::Orange].begin());
+      int b_pos (0);
+      int o_pos (0);
 
-      while (  b_pos != sizes[player::Blue].end()
-            && o_pos != sizes[player::Orange].end()
-            && *b_pos == *o_pos
+      while (  b_pos != pos[player::Blue]
+            && o_pos != pos[player::Orange]
+            && sizes[player::Blue][b_pos] == sizes[player::Orange][o_pos]
             )
       {
         ++b_pos;
         ++o_pos;
       }
 
-      if (  b_pos != sizes[player::Blue].end()
-         && o_pos != sizes[player::Orange].end()
+      if (  b_pos != pos[player::Blue]
+         && o_pos != pos[player::Orange]
          )
       {
-        return (*b_pos > *o_pos) ? player::Blue : player::Orange;
+        return (sizes[player::Blue][b_pos] > sizes[player::Orange][o_pos])
+          ? player::Blue : player::Orange;
       }
 
-      if (b_pos != sizes[player::Blue].end())
+      if (b_pos != pos[player::Blue])
       {
         return player::Blue;
       }
 
-      if (o_pos != sizes[player::Orange].end())
+      if (o_pos != pos[player::Orange])
       {
         return player::Orange;
       }
