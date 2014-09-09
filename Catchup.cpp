@@ -37,7 +37,6 @@ namespace
     std::vector<point> plane (int size);
     int distance (point const&, point const&);
     point rotate60 (point const&);
-    point rotate300 (point const&);
     point mirror (point const&, int axis);
   }
 
@@ -140,14 +139,6 @@ namespace
       return point ( (2 * x (p) -     y (p) + 2 * z (p)) / 3
                    , (2 * x (p) + 2 * y (p) -     z (p)) / 3
                    , (   -x (p) + 2 * y (p) + 2 * z (p)) / 3
-                   );
-    }
-
-    point rotate300 (point const& p)
-    {
-      return point ( (2 * x (p) + 2 * y (p) -     z (p)) / 3
-                   , (   -x (p) + 2 * y (p) + 2 * z (p)) / 3
-                   , (2 * x (p) -     y (p) + 2 * z (p)) / 3
                    );
     }
 
