@@ -25,6 +25,24 @@ namespace
     point mirror (point const&, int axis);
   }
 
+  namespace player
+  {
+    typedef enum {Blue = 0, Orange = 1, None} player;
+
+    player other (player);
+
+    class show
+    {
+    public:
+      show (player const&);
+      std::ostream& operator() (std::ostream&) const;
+
+    private:
+      player const& _player;
+    };
+    std::ostream& operator<< (std::ostream&, show const&);
+  }
+
   namespace point
   {
     int x (point const& p) { return std::get<0> (p); }
@@ -99,30 +117,21 @@ namespace
 
   namespace player
   {
-    typedef enum {Blue = 0, Orange = 1, None} player;
-
     player other (player p)
     {
       return (p == Blue) ? Orange : Blue;
     }
 
-    class show
+    show::show (player const& player)
+      : _player (player)
+    {}
+    std::ostream& show::operator() (std::ostream& os) const
     {
-    public:
-      show (player const& player)
-        : _player (player)
-      {}
-      std::ostream& operator() (std::ostream& os) const
-      {
-        return os << ( (_player == Blue) ? 'B'
-                     : (_player == Orange) ? 'O'
-                     : '.'
-                     );
-      }
-
-    private:
-      player const& _player;
-    };
+      return os << ( (_player == Blue) ? 'B'
+                   : (_player == Orange) ? 'O'
+                   : '.'
+                   );
+    }
     std::ostream& operator<< (std::ostream& os, show const& s)
     {
       return s (os);
