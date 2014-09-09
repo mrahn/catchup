@@ -276,12 +276,21 @@ namespace
         {
           std::vector<player::player> translated (point::plane_size (SIZE));
 
-          for (int field (0); field < point::plane_size (SIZE); ++field)
+          bool greater (false);
+          bool smaller (false);
+
+          for ( int field (0)
+              ; field < point::plane_size (SIZE) && !greater
+              ; ++field
+              )
           {
             translated[field] = _stone[translation[field]];
+
+            smaller = smaller || translated[field] < minimum[field];
+            greater = !smaller && translated[field] > minimum[field];
           }
 
-          if (translated < minimum)
+          if (smaller)
           {
             minimum = translated;
           }
