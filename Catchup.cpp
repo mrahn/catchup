@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <iostream>
 #include <map>
-#include <stack>
 #include <tuple>
 #include <vector>
 
@@ -362,7 +361,8 @@ namespace
     template<int SIZE>
     int board<SIZE>::max_sizes_of_components (std::vector<int> fields) const
     {
-      std::stack<int> stack;
+      int stack[point::plane_size (SIZE)];
+      int top (0);
       bool seen[point::plane_size (SIZE)];
       int max (0);
 
@@ -375,19 +375,19 @@ namespace
           int size (0);
           player::player const player (_stone[field]);
 
-          stack.push (field);
+          stack[top++] = field;
           ++size;
           seen[field] = true;
 
-          while (!stack.empty())
+          while (top > 0)
           {
-            int const f (stack.top()); stack.pop();
+            int const f (stack[--top]);
 
             for (int n : _neighbour[f])
             {
               if (_stone[n] == player && !seen[n])
               {
-                stack.push (n);
+                stack[top++] = n;
                 ++size;
                 seen[n] = true;
               }
@@ -404,7 +404,8 @@ namespace
     template<int SIZE>
     player::player board<SIZE>::in_front() const
     {
-      std::vector<std::stack<int>> stack (2);
+      int stack[2][point::plane_size (SIZE)];
+      int top[2] = {0,0};
       bool seen[2][point::plane_size (SIZE)];
       std::vector<std::vector<int>> sizes (2);
 
@@ -419,19 +420,19 @@ namespace
         {
           int size (0);
 
-          stack[player].push (field);
+          stack[player][top[player]++] = field;
           ++size;
           seen[player][field] = true;
 
-          while (!stack[player].empty())
+          while (top[player] > 0)
           {
-            int const f (stack[player].top()); stack[player].pop();
+            int const f (stack[player][--top[player]]);
 
             for (int n : _neighbour[f])
             {
               if (_stone[n] == player && !seen[player][n])
               {
-                stack[player].push (n);
+                stack[player][top[player]++] = n;
                 ++size;
                 seen[player][n] = true;
               }
