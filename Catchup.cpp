@@ -1,5 +1,4 @@
 // mirko.rahn@web.de
-// clang++ -std=c++11 -Wall -Wextra -O3 -fno-exceptions Catchup.cpp
 
 #include <algorithm>
 #include <iostream>
@@ -626,8 +625,7 @@ int main()
 
   std::cout << board::show<3> (board) << std::endl;
 
-  //  std::cout << player::show (board.winner()) << std::endl;
-  //  std::cout << board._puts << std::endl;
+  std::cout << player::show (board.winner()) << std::endl;
 }
 
 /*
