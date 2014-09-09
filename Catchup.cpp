@@ -478,18 +478,6 @@ namespace
           rotate60[field] = id_by_point.at (point::rotate60 (points[field]));
         }
 
-        std::vector<std::vector<int>> mirror
-          (6, std::vector<int> (point::plane_size (size)));
-
-        for (int axis (0); axis < 6; ++axis)
-        {
-          for (int field (0); field < point::plane_size (size); ++field)
-          {
-            mirror[axis][field] =
-              id_by_point.at (point::mirror (points[field], axis));
-          }
-        }
-
         std::vector<std::vector<int>> ts
           (12, std::vector<int> (point::plane_size (size)));
 
@@ -497,8 +485,11 @@ namespace
         {
           for (int field (0); field < point::plane_size (size); ++field)
           {
-            ts[0 + axis][field] = mirror[axis][field];
-            ts[6 + axis][field] = mirror[axis][rotate60[field]];
+            ts[0 + axis][field] =
+              id_by_point.at (point::mirror (points[field], axis));
+
+            ts[6 + axis][field] =
+              id_by_point.at (point::mirror (points[rotate60[field]], axis));
           }
         }
 
