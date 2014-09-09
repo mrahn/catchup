@@ -124,6 +124,11 @@ namespace
     class board
     {
     public:
+      board (board const&) = delete;
+      board operator= (board const&) = delete;
+      board (board&&) = delete;
+      board operator= (board&&) = delete;
+
       board()
         : _depth (0)
         , _available_stones (std::min (point::plane_size (SIZE), 1))
