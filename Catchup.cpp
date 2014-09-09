@@ -10,6 +10,23 @@
 
 namespace
 {
+  namespace
+  {
+    template<typename T>
+    struct stream_modifier
+    {
+      virtual ~stream_modifier() = default;
+      virtual std::ostream& operator() (std::ostream&) const = 0;
+    };
+    template<typename T>
+    std::ostream& operator<< ( std::ostream& stream
+                             , stream_modifier<T> const& modify
+                             )
+    {
+      return modify (stream);
+    }
+  }
+
   namespace point
   {
     typedef std::tuple<int, int, int> point;
@@ -31,16 +48,15 @@ namespace
 
     player other (player);
 
-    class show
+    class show : public stream_modifier<player>
     {
     public:
       show (player const&);
-      std::ostream& operator() (std::ostream&) const;
+      virtual std::ostream& operator() (std::ostream&) const override;
 
     private:
       player const& _player;
     };
-    std::ostream& operator<< (std::ostream&, show const&);
   }
 
   namespace point
@@ -131,10 +147,6 @@ namespace
                    : (_player == Orange) ? 'O'
                    : '.'
                    );
-    }
-    std::ostream& operator<< (std::ostream& os, show const& s)
-    {
-      return s (os);
     }
   }
 
@@ -527,13 +539,13 @@ namespace
     const board<SIZE>::_translations {make_translations (SIZE)};
 
     template<int SIZE>
-    class show
+    class show : public stream_modifier<board<SIZE>>
     {
     public:
       show (board<SIZE> const& board)
         : _board (board)
       {}
-      std::ostream& operator() (std::ostream& os) const
+      virtual std::ostream& operator() (std::ostream& os) const override
       {
         os << "to_move " << player::show (_board._to_move)
            << ", high_water " << _board._high_water
@@ -580,11 +592,6 @@ namespace
     private:
       board<SIZE> const& _board;
     };
-    template<int SIZE>
-    std::ostream& operator<< (std::ostream& os, show<SIZE> const& s)
-    {
-      return s (os);
-    }
   }
 }
 
