@@ -87,7 +87,7 @@ namespace
       int _available_stones;
       player::player _to_move;
       int _high_water;
-      std::vector<player::player> _stone;
+      player::player _stone[point::plane_size (SIZE)];
 
       int max_sizes_of_components (std::vector<int> fields) const;
       player::player in_front() const;
@@ -185,8 +185,10 @@ namespace
       , _available_stones (std::min (point::plane_size (SIZE), 1))
       , _to_move (player::Blue)
       , _high_water (0)
-      , _stone (point::plane_size (SIZE), player::None)
-    {}
+      , _stone()
+    {
+      std::fill (_stone, _stone + point::plane_size (SIZE), player::None);
+    }
 
     template<int SIZE>
     void board<SIZE>::put (std::vector<int> fields)
@@ -326,11 +328,13 @@ namespace
     template<int SIZE>
     void board<SIZE>::normal()
     {
-      std::vector<player::player> minimum (_stone);
+      player::player minimum[point::plane_size (SIZE)];
+
+      std::copy (_stone, _stone + point::plane_size (SIZE), minimum);
 
       for (std::vector<int> const& translation : _translations)
       {
-        std::vector<player::player> translated (point::plane_size (SIZE));
+        player::player translated[point::plane_size (SIZE)];
 
         bool greater (false);
         bool smaller (false);
@@ -348,11 +352,11 @@ namespace
 
         if (smaller)
         {
-          minimum = translated;
+          std::copy (translated, translated + point::plane_size (SIZE), minimum);
         }
       }
 
-      _stone = minimum;
+      std::copy (minimum, minimum + point::plane_size (SIZE), _stone);
     }
 
     template<int SIZE>
