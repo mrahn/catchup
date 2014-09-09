@@ -471,13 +471,6 @@ namespace
         std::vector<point::point> const points (point::plane (size));
         std::map<point::point, int> const id_by_point (numbered (points));
 
-        std::vector<int> rotate60 (point::plane_size (size));
-
-        for (int field (0); field < point::plane_size (size); ++field)
-        {
-          rotate60[field] = id_by_point.at (point::rotate60 (points[field]));
-        }
-
         std::vector<std::vector<int>> ts
           (12, std::vector<int> (point::plane_size (size)));
 
@@ -489,7 +482,7 @@ namespace
               id_by_point.at (point::mirror (points[field], axis));
 
             ts[6 + axis][field] =
-              id_by_point.at (point::mirror (points[rotate60[field]], axis));
+              id_by_point.at (point::mirror (points[id_by_point.at (point::rotate60 (points[field]))], axis));
           }
         }
 
