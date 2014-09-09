@@ -272,19 +272,7 @@ namespace
       {
         std::vector<player::player> minimum (_stone);
 
-        std::vector<std::vector<int>> translations
-          (12, std::vector<int> (point::plane_size (SIZE)));
-
-        for (int axis (0); axis < 6; ++axis)
-        {
-          for (int field (0); field < point::plane_size (SIZE); ++field)
-          {
-            translations[0 + axis][field] = _mirror[axis][field];
-            translations[6 + axis][field] = _mirror[axis][_rotate60[field]];
-          }
-        }
-
-        for (std::vector<int> const& translation : translations)
+        for (std::vector<int> const& translation : _translations)
         {
           std::vector<player::player> translated (point::plane_size (SIZE));
 
@@ -304,8 +292,7 @@ namespace
 
     private:
       static std::vector<std::vector<int>> const _neighbour;
-      static std::vector<int> const _rotate60;
-      static std::vector<std::vector<int>> const _mirror;
+      static std::vector<std::vector<int>> const _translations;
 
       friend class show<SIZE>;
 
@@ -501,6 +488,26 @@ namespace
 
         return ms;
       }
+
+      std::vector<std::vector<int>> make_translations (int size)
+      {
+        std::vector<int> const rotate60 (make_rotate60 (size));
+        std::vector<std::vector<int>> const mirror (make_mirror (size));
+
+        std::vector<std::vector<int>> ts
+          (12, std::vector<int> (point::plane_size (size)));
+
+        for (int axis (0); axis < 6; ++axis)
+        {
+          for (int field (0); field < point::plane_size (size); ++field)
+          {
+            ts[0 + axis][field] = mirror[axis][field];
+            ts[6 + axis][field] = mirror[axis][rotate60[field]];
+          }
+        }
+
+        return ts;
+      }
     }
 
     template<int SIZE>
@@ -508,11 +515,8 @@ namespace
     const board<SIZE>::_neighbour {neighbours (SIZE)};
 
     template<int SIZE>
-    std::vector<int> const board<SIZE>::_rotate60 {make_rotate60 (SIZE)};
-
-    template<int SIZE>
     std::vector<std::vector<int>>
-    const board<SIZE>::_mirror {make_mirror (SIZE)};
+    const board<SIZE>::_translations {make_translations (SIZE)};
 
     template<int SIZE>
     class show
