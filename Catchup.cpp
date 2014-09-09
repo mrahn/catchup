@@ -466,42 +466,29 @@ namespace
         return ns;
       }
 
-      std::vector<int> make_rotate60 (int size)
+      std::vector<std::vector<int>> make_translations (int size)
       {
         std::vector<point::point> const points (point::plane (size));
         std::map<point::point, int> const id_by_point (numbered (points));
-        std::vector<int> rs (points.size());
+
+        std::vector<int> rotate60 (point::plane_size (size));
 
         for (int field (0); field < point::plane_size (size); ++field)
         {
-          rs[field] = id_by_point.at (point::rotate60 (points[field]));
+          rotate60[field] = id_by_point.at (point::rotate60 (points[field]));
         }
 
-        return rs;
-      }
-
-      std::vector<std::vector<int>> make_mirror (int size)
-      {
-        std::vector<point::point> const points (point::plane (size));
-        std::map<point::point, int> const id_by_point (numbered (points));
-        std::vector<std::vector<int>> ms (6, std::vector<int> (points.size()));
+        std::vector<std::vector<int>> mirror
+          (6, std::vector<int> (point::plane_size (size)));
 
         for (int axis (0); axis < 6; ++axis)
         {
           for (int field (0); field < point::plane_size (size); ++field)
           {
-            ms[axis][field] =
+            mirror[axis][field] =
               id_by_point.at (point::mirror (points[field], axis));
           }
         }
-
-        return ms;
-      }
-
-      std::vector<std::vector<int>> make_translations (int size)
-      {
-        std::vector<int> const rotate60 (make_rotate60 (size));
-        std::vector<std::vector<int>> const mirror (make_mirror (size));
 
         std::vector<std::vector<int>> ts
           (12, std::vector<int> (point::plane_size (size)));
