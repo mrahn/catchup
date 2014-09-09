@@ -472,16 +472,22 @@ namespace
         std::map<point::point, int> const id_by_point (numbered (points));
 
         std::vector<std::vector<int>> ts
-          (12, std::vector<int> (point::plane_size (size)));
+          (11, std::vector<int> (point::plane_size (size)));
+
+        for (int axis (1); axis < 6; ++axis)
+        {
+          for (int field (0); field < point::plane_size (size); ++field)
+          {
+            ts[axis - 1][field] =
+              id_by_point.at (point::mirror (points[field], axis));
+          }
+        }
 
         for (int axis (0); axis < 6; ++axis)
         {
           for (int field (0); field < point::plane_size (size); ++field)
           {
-            ts[0 + axis][field] =
-              id_by_point.at (point::mirror (points[field], axis));
-
-            ts[6 + axis][field] =
+            ts[axis + 5][field] =
               id_by_point.at (point::mirror (points[id_by_point.at (point::rotate60 (points[field]))], axis));
           }
         }
