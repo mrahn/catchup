@@ -58,8 +58,19 @@ namespace
   namespace board
   {
     constexpr int num_fields (int size);
+    constexpr int num_neighbours (int size);
 
     template<int SIZE> class show;
+
+    template<int SIZE>
+    class neighbourhood
+    {
+    public:
+      neighbourhood();
+      int const* neighbours() const;
+    private:
+      int _neighbours[num_fields (SIZE) + 1 + num_neighbours (SIZE)];
+    };
 
     template<int SIZE>
     class board
@@ -70,7 +81,7 @@ namespace
       board (board&&) = delete;
       board operator= (board&&) = delete;
 
-      board();
+      board (int const* const neighbours);
 
       void put (std::vector<int>);
       void unput (std::vector<int>, int available_stones, int high_water);
@@ -85,13 +96,13 @@ namespace
       player::player _to_move;
       int _high_water;
       player::player _stone[num_fields (SIZE)];
+      int const* const _neighbours;
 
       int max_sizes_of_components (std::vector<int> fields) const;
       player::player in_front() const;
     };
 
     template<int SIZE> std::vector<std::vector<int>> const& translations();
-    template<int SIZE> std::vector<std::vector<int>> const& neighbours();
   }
 
   namespace point
@@ -178,14 +189,19 @@ namespace
     {
       return 3 * size * (size - 1) + (size < 1 ? size : 1);
     }
+    constexpr int num_neighbours (int size)
+    {
+      return (size < 1) ? 0 : 6 * (size - 1) * (3 * size - 2);
+    }
 
     template<int SIZE>
-    board<SIZE>::board()
+    board<SIZE>::board (int const* neighbours)
       : _depth (0)
       , _available_stones (std::min (num_fields (SIZE), 1))
       , _to_move (player::Blue)
       , _high_water (0)
       , _stone()
+      , _neighbours (neighbours)
     {
       std::fill (_stone, _stone + num_fields (SIZE), player::None);
     }
@@ -381,13 +397,13 @@ namespace
           {
             int const f (stack[--top]);
 
-            for (int n : neighbours<SIZE>()[f])
+            for (int n (_neighbours[f]); n < _neighbours[f + 1]; ++n)
             {
-              if (_stone[n] == player && !seen[n])
+              if (_stone[_neighbours[n]] == player && !seen[_neighbours[n]])
               {
-                stack[top++] = n;
+                stack[top++] = _neighbours[n];
                 ++size;
-                seen[n] = true;
+                seen[_neighbours[n]] = true;
               }
             }
           }
@@ -429,13 +445,15 @@ namespace
           {
             int const f (stack[player][--top[player]]);
 
-            for (int n : neighbours<SIZE>()[f])
+            for (int n (_neighbours[f]); n < _neighbours[f + 1]; ++n)
             {
-              if (_stone[n] == player && !seen[player][n])
+              if (  _stone[_neighbours[n]] == player
+                 && !seen[player][_neighbours[n]]
+                 )
               {
-                stack[player][top[player]++] = n;
+                stack[player][top[player]++] = _neighbours[n];
                 ++size;
-                seen[player][n] = true;
+                seen[player][_neighbours[n]] = true;
               }
             }
           }
@@ -499,29 +517,6 @@ namespace
         return m;
       }
 
-      std::vector<std::vector<int>> make_neighbours (int size)
-      {
-        std::vector<point::point> const points (point::plane (size));
-        std::map<point::point, int> const id_by_point (numbered (points));
-        std::vector<std::vector<int>> ns (num_fields (size));
-        int k (0);
-
-        for (point::point const& p : points)
-        {
-          std::vector<int>& n (ns[k++]);
-
-          for (point::point const& q : points)
-          {
-            if (point::distance (p, q) == 1)
-            {
-              n.emplace_back (id_by_point.at (q));
-            }
-          }
-        }
-
-        return ns;
-      }
-
       std::vector<std::vector<int>> make_translations (int size)
       {
         std::vector<point::point> const points (point::plane (size));
@@ -552,12 +547,36 @@ namespace
       }
     }
 
-    template<int SIZE> std::vector<std::vector<int>> const& neighbours()
+    template<int SIZE>
+    neighbourhood<SIZE>::neighbourhood()
+      : _neighbours()
     {
-      static std::vector<std::vector<int>> const ns {make_neighbours (SIZE)};
+      std::vector<point::point> const points (point::plane (SIZE));
+      std::map<point::point, int> const id_by_point (numbered (points));
 
-      return ns;
-    };
+      int k (num_fields (SIZE) + 1);
+      int f (0);
+
+      for (point::point const& p : points)
+      {
+        _neighbours[f++] = k;
+
+        for (point::point const& q : points)
+        {
+          if (point::distance (p, q) == 1)
+          {
+            _neighbours[k++] = id_by_point.at (q);
+          }
+        }
+      }
+
+      _neighbours[f] = k;
+    }
+    template<int SIZE>
+    int const* neighbourhood<SIZE>::neighbours() const
+    {
+      return _neighbours;
+    }
 
     template<int SIZE> std::vector<std::vector<int>> const& translations()
     {
@@ -625,7 +644,9 @@ namespace
 
 int main()
 {
-  board::board<3> board;
+  board::neighbourhood<3> const neighbourhood;
+
+  board::board<3> board (neighbourhood.neighbours());
   board.put ({4});
   board.put ({5,8});
   board.normal();
