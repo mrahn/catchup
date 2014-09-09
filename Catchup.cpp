@@ -33,7 +33,7 @@ namespace
     int x (point const&);
     int y (point const&);
     int z (point const&);
-    int plane_size (int size);
+    constexpr int plane_size (int size);
     std::vector<point> plane (int size);
     int distance (point const&, point const&);
     point rotate60 (point const&);
@@ -100,9 +100,9 @@ namespace
     int y (point const& p) { return std::get<1> (p); }
     int z (point const& p) { return std::get<2> (p); }
 
-    int plane_size (int size)
+    constexpr int plane_size (int size)
     {
-      return 3 * size * (size - 1) + std::min (1, size);
+      return 3 * size * (size - 1) + (size < 1 ? size : 1);
     }
 
     std::vector<point> plane (int size)
