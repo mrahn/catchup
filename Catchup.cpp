@@ -278,7 +278,7 @@ namespace
 
           for (int field (0); field < point::plane_size (SIZE); ++field)
           {
-            mirrored[_mirror[axis][field]] = _stone[field];
+            mirrored[field] = _stone[_mirror[axis][field]];
           }
 
           if (mirrored < minimum)
@@ -293,7 +293,7 @@ namespace
 
           for (int field (0); field < point::plane_size (SIZE); ++field)
           {
-            mirrored_rotated[_mirror[axis][_rotate60[field]]] = _stone[field];
+            mirrored_rotated[field] = _stone[_mirror[axis][_rotate60[field]]];
           }
 
           if (mirrored_rotated < minimum)
