@@ -59,6 +59,43 @@ namespace
     };
   }
 
+  namespace board
+  {
+    template<int SIZE> class show;
+
+    template<int SIZE>
+    class board
+    {
+    public:
+      board (board const&) = delete;
+      board operator= (board const&) = delete;
+      board (board&&) = delete;
+      board operator= (board&&) = delete;
+
+      board();
+
+      void put (std::vector<int>);
+      void unput (std::vector<int>, int available_stones, int high_water);
+      player::player winner();
+      void normal();
+
+    private:
+      static std::vector<std::vector<int>> const _neighbour;
+      static std::vector<std::vector<int>> const _translations;
+
+      friend class show<SIZE>;
+
+      int _depth;
+      int _available_stones;
+      player::player _to_move;
+      int _high_water;
+      std::vector<player::player> _stone;
+
+      int max_sizes_of_components (std::vector<int> fields) const;
+      player::player in_front() const;
+    };
+  }
+
   namespace point
   {
     int x (point const& p) { return std::get<0> (p); }
@@ -152,314 +189,298 @@ namespace
 
   namespace board
   {
-    template<int SIZE> class show;
+    template<int SIZE>
+    board<SIZE>::board()
+      : _depth (0)
+      , _available_stones (std::min (point::plane_size (SIZE), 1))
+      , _to_move (player::Blue)
+      , _high_water (0)
+      , _stone (point::plane_size (SIZE), player::None)
+    {}
 
     template<int SIZE>
-    class board
+    void board<SIZE>::put (std::vector<int> fields)
     {
-    public:
-      board (board const&) = delete;
-      board operator= (board const&) = delete;
-      board (board&&) = delete;
-      board operator= (board&&) = delete;
-
-      board()
-        : _depth (0)
-        , _available_stones (std::min (point::plane_size (SIZE), 1))
-        , _to_move (player::Blue)
-        , _high_water (0)
-        , _stone (point::plane_size (SIZE), player::None)
-      {}
-
-      void put (std::vector<int> fields)
+      for (int field : fields)
       {
-        for (int field : fields)
-        {
-          _stone[field] = _to_move;
-          ++_depth;
-        }
-
-        _to_move = other (_to_move);
-        int const csize (max_sizes_of_components (fields));
-        _available_stones = std::min
-          ( point::plane_size (SIZE) - _depth
-          , (_high_water > 0 && csize > _high_water && _depth > 1) ? 3 : 2
-          );
-        _high_water = std::max (_high_water, csize);
+        _stone[field] = _to_move;
+        ++_depth;
       }
 
-      void unput (std::vector<int> fields, int available_stones, int high_water)
-      {
-        for (int field : fields)
-        {
-          _stone[field] = player::None;
-          --_depth;
-        }
+      _to_move = other (_to_move);
+      int const csize (max_sizes_of_components (fields));
+      _available_stones = std::min
+        ( point::plane_size (SIZE) - _depth
+        , (_high_water > 0 && csize > _high_water && _depth > 1) ? 3 : 2
+        );
+      _high_water = std::max (_high_water, csize);
+    }
 
-        _to_move = other (_to_move);
-        _available_stones = available_stones;
-        _high_water = high_water;
+    template<int SIZE>
+    void board<SIZE>::unput
+      (std::vector<int> fields, int available_stones, int high_water)
+    {
+      for (int field : fields)
+      {
+        _stone[field] = player::None;
+        --_depth;
       }
 
-      player::player winner()
+      _to_move = other (_to_move);
+      _available_stones = available_stones;
+      _high_water = high_water;
+    }
+
+    template<int SIZE>
+    player::player board<SIZE>::winner()
+    {
+#define NEXT_FREE_FIELD(_var)                   \
+      while (  _var < point::plane_size (SIZE)  \
+            && _stone[_var] != player::None     \
+            )                                   \
+      {                                         \
+        ++_var;                                 \
+      }
+
+      int const available_stones (_available_stones);
+      int const high_water (_high_water);
+
+      if (_available_stones > 2)
       {
-#define NEXT_FREE_FIELD(_var)                                           \
-        while (  _var < point::plane_size (SIZE)                        \
-              && _stone[_var] != player::None                           \
-              )                                                         \
-        {                                                               \
-          ++_var;                                                       \
-        }
+        int f (0); NEXT_FREE_FIELD (f);
 
-        int const available_stones (_available_stones);
-        int const high_water (_high_water);
-
-        if (_available_stones > 2)
+        while (f + 2 < point::plane_size (SIZE))
         {
-          int f (0); NEXT_FREE_FIELD (f);
+          int g (f + 1); NEXT_FREE_FIELD (g);
 
-          while (f + 2 < point::plane_size (SIZE))
+          while (g + 1 < point::plane_size (SIZE))
           {
-            int g (f + 1); NEXT_FREE_FIELD (g);
+            int h (g + 1); NEXT_FREE_FIELD (h);
 
-            while (g + 1 < point::plane_size (SIZE))
+            while (h < point::plane_size (SIZE))
             {
-              int h (g + 1); NEXT_FREE_FIELD (h);
-
-              while (h < point::plane_size (SIZE))
-              {
-                put ({f, g, h});
-
-                player::player const won (winner());
-
-                unput ({f, g, h}, available_stones, high_water);
-
-                if (won == _to_move)
-                {
-                  return _to_move;
-                }
-
-                ++h; NEXT_FREE_FIELD (h);
-              }
-
-              ++g; NEXT_FREE_FIELD (g);
-            }
-
-            ++f; NEXT_FREE_FIELD (f);
-          }
-        }
-
-        if (_available_stones > 1)
-        {
-          int f (0); NEXT_FREE_FIELD (f);
-
-          while (f + 1 < point::plane_size (SIZE))
-          {
-            int g (f + 1); NEXT_FREE_FIELD (g);
-
-            while (g < point::plane_size (SIZE))
-            {
-              put ({f, g});
+              put ({f, g, h});
 
               player::player const won (winner());
 
-              unput ({f, g}, available_stones, high_water);
+              unput ({f, g, h}, available_stones, high_water);
 
               if (won == _to_move)
               {
                 return _to_move;
               }
 
-              ++g; NEXT_FREE_FIELD (g);
+              ++h; NEXT_FREE_FIELD (h);
             }
 
-            ++f; NEXT_FREE_FIELD (f);
+            ++g; NEXT_FREE_FIELD (g);
           }
+
+          ++f; NEXT_FREE_FIELD (f);
         }
+      }
 
+      if (_available_stones > 1)
+      {
+        int f (0); NEXT_FREE_FIELD (f);
+
+        while (f + 1 < point::plane_size (SIZE))
         {
-          int f (0); NEXT_FREE_FIELD (f);
+          int g (f + 1); NEXT_FREE_FIELD (g);
 
-          while (f < point::plane_size (SIZE))
+          while (g < point::plane_size (SIZE))
           {
-            put ({f});
+            put ({f, g});
 
             player::player const won (winner());
 
-            unput ({f}, available_stones, high_water);
+            unput ({f, g}, available_stones, high_water);
 
             if (won == _to_move)
             {
               return _to_move;
             }
 
-            ++f; NEXT_FREE_FIELD (f);
+            ++g; NEXT_FREE_FIELD (g);
           }
-        }
 
-        return _available_stones ? player::other (_to_move) : in_front();
+          ++f; NEXT_FREE_FIELD (f);
+        }
+      }
+
+      {
+        int f (0); NEXT_FREE_FIELD (f);
+
+        while (f < point::plane_size (SIZE))
+        {
+          put ({f});
+
+          player::player const won (winner());
+
+          unput ({f}, available_stones, high_water);
+
+          if (won == _to_move)
+          {
+            return _to_move;
+          }
+
+          ++f; NEXT_FREE_FIELD (f);
+        }
+      }
+
+      return _available_stones ? player::other (_to_move) : in_front();
 
 #undef NEXT_FREE_FIELD
-      }
+    }
 
-      void normal()
+    template<int SIZE>
+    void board<SIZE>::normal()
+    {
+      std::vector<player::player> minimum (_stone);
+
+      for (std::vector<int> const& translation : _translations)
       {
-        std::vector<player::player> minimum (_stone);
+        std::vector<player::player> translated (point::plane_size (SIZE));
 
-        for (std::vector<int> const& translation : _translations)
+        bool greater (false);
+        bool smaller (false);
+
+        for ( int field (0)
+            ; field < point::plane_size (SIZE) && !greater
+            ; ++field
+            )
         {
-          std::vector<player::player> translated (point::plane_size (SIZE));
+          translated[field] = _stone[translation[field]];
 
-          bool greater (false);
-          bool smaller (false);
-
-          for ( int field (0)
-              ; field < point::plane_size (SIZE) && !greater
-              ; ++field
-              )
-          {
-            translated[field] = _stone[translation[field]];
-
-            smaller = smaller || translated[field] < minimum[field];
-            greater = !smaller && translated[field] > minimum[field];
-          }
-
-          if (smaller)
-          {
-            minimum = translated;
-          }
+          smaller = smaller || translated[field] < minimum[field];
+          greater = !smaller && translated[field] > minimum[field];
         }
 
-        _stone = minimum;
-      }
-
-    private:
-      static std::vector<std::vector<int>> const _neighbour;
-      static std::vector<std::vector<int>> const _translations;
-
-      friend class show<SIZE>;
-
-      int _depth;
-      int _available_stones;
-      player::player _to_move;
-      int _high_water;
-      std::vector<player::player> _stone;
-
-      int max_sizes_of_components (std::vector<int> fields) const
-      {
-        std::stack<int> stack;
-        std::vector<bool> seen (point::plane_size (SIZE), false);
-        int max (0);
-
-        for (int field : fields)
+        if (smaller)
         {
-          if (!seen[field])
-          {
-            int size (0);
-            player::player const player (_stone[field]);
-
-            stack.push (field);
-            ++size;
-            seen[field] = true;
-
-            while (!stack.empty())
-            {
-              int const f (stack.top()); stack.pop();
-
-              for (int n : _neighbour[f])
-              {
-                if (_stone[n] == player && !seen[n])
-                {
-                  stack.push (n);
-                  ++size;
-                  seen[n] = true;
-                }
-              }
-            }
-
-            max = std::max (max, size);
-          }
+          minimum = translated;
         }
-
-        return max;
       }
 
-      player::player in_front() const
-      {
-        std::vector<std::stack<int>> stack (2);
-        std::vector<std::vector<bool>> seen
-          (2, std::vector<bool> (point::plane_size (SIZE), false));
-        std::vector<std::vector<int>> sizes (2);
+      _stone = minimum;
+    }
 
-        for (int field (0); field < point::plane_size (SIZE); ++field)
+    template<int SIZE>
+    int board<SIZE>::max_sizes_of_components (std::vector<int> fields) const
+    {
+      std::stack<int> stack;
+      std::vector<bool> seen (point::plane_size (SIZE), false);
+      int max (0);
+
+      for (int field : fields)
+      {
+        if (!seen[field])
         {
+          int size (0);
           player::player const player (_stone[field]);
 
-          if (player != player::None && !seen[player][field])
+          stack.push (field);
+          ++size;
+          seen[field] = true;
+
+          while (!stack.empty())
           {
-            int size (0);
+            int const f (stack.top()); stack.pop();
 
-            stack[player].push (field);
-            ++size;
-            seen[player][field] = true;
-
-            while (!stack[player].empty())
+            for (int n : _neighbour[f])
             {
-              int const f (stack[player].top()); stack[player].pop();
-
-              for (int n : _neighbour[f])
+              if (_stone[n] == player && !seen[n])
               {
-                if (_stone[n] == player && !seen[player][n])
-                {
-                  stack[player].push (n);
-                  ++size;
-                  seen[player][n] = true;
-                }
+                stack.push (n);
+                ++size;
+                seen[n] = true;
               }
             }
-
-            sizes[player].emplace_back (size);
           }
+
+          max = std::max (max, size);
         }
-
-        for (player::player player : {player::Blue, player::Orange})
-        {
-          std::sort
-            (sizes[player].begin(), sizes[player].end(), std::greater<int>());
-        }
-
-        std::vector<int>::const_iterator b_pos (sizes[player::Blue].begin());
-        std::vector<int>::const_iterator o_pos (sizes[player::Orange].begin());
-
-        while (  b_pos != sizes[player::Blue].end()
-              && o_pos != sizes[player::Orange].end()
-              && *b_pos == *o_pos
-              )
-        {
-          ++b_pos;
-          ++o_pos;
-        }
-
-        if (  b_pos != sizes[player::Blue].end()
-           && o_pos != sizes[player::Orange].end()
-           )
-        {
-          return (*b_pos > *o_pos) ? player::Blue : player::Orange;
-        }
-
-        if (b_pos != sizes[player::Blue].end())
-        {
-          return player::Blue;
-        }
-
-        if (o_pos != sizes[player::Orange].end())
-        {
-          return player::Orange;
-        }
-
-        abort();
       }
-    };
+
+      return max;
+    }
+
+    template<int SIZE>
+    player::player board<SIZE>::in_front() const
+    {
+      std::vector<std::stack<int>> stack (2);
+      std::vector<std::vector<bool>> seen
+        (2, std::vector<bool> (point::plane_size (SIZE), false));
+      std::vector<std::vector<int>> sizes (2);
+
+      for (int field (0); field < point::plane_size (SIZE); ++field)
+      {
+        player::player const player (_stone[field]);
+
+        if (player != player::None && !seen[player][field])
+        {
+          int size (0);
+
+          stack[player].push (field);
+          ++size;
+          seen[player][field] = true;
+
+          while (!stack[player].empty())
+          {
+            int const f (stack[player].top()); stack[player].pop();
+
+            for (int n : _neighbour[f])
+            {
+              if (_stone[n] == player && !seen[player][n])
+              {
+                stack[player].push (n);
+                ++size;
+                seen[player][n] = true;
+              }
+            }
+          }
+
+          sizes[player].emplace_back (size);
+        }
+      }
+
+      for (player::player player : {player::Blue, player::Orange})
+      {
+        std::sort
+          (sizes[player].begin(), sizes[player].end(), std::greater<int>());
+      }
+
+      std::vector<int>::const_iterator b_pos (sizes[player::Blue].begin());
+      std::vector<int>::const_iterator o_pos (sizes[player::Orange].begin());
+
+      while (  b_pos != sizes[player::Blue].end()
+            && o_pos != sizes[player::Orange].end()
+            && *b_pos == *o_pos
+            )
+      {
+        ++b_pos;
+        ++o_pos;
+      }
+
+      if (  b_pos != sizes[player::Blue].end()
+         && o_pos != sizes[player::Orange].end()
+         )
+      {
+        return (*b_pos > *o_pos) ? player::Blue : player::Orange;
+      }
+
+      if (b_pos != sizes[player::Blue].end())
+      {
+        return player::Blue;
+      }
+
+      if (o_pos != sizes[player::Orange].end())
+      {
+        return player::Orange;
+      }
+
+      abort();
+    }
 
     namespace
     {
@@ -598,13 +619,29 @@ namespace
 int main()
 {
   board::board<3> board;
-
   board.put ({4});
   board.put ({5,8});
   board.put ({6,14});
-  // board.put ({9,12});
-  //  board.put ({1,2,10});
+  board.normal();
 
-  std::cout << board::show<3> (board);
-  std::cout << player::show (board.winner()) << std::endl;
+  std::cout << board::show<3> (board) << std::endl;
+
+  //  std::cout << player::show (board.winner()) << std::endl;
+  //  std::cout << board._puts << std::endl;
 }
+
+/*
+rahn@brank:~/catchup$ g++ -std=c++11 -Wall -Wextra -O3 -fno-exceptions -pg Catchup.cpp -o Catchup.exe && time ./Catchup.exe
+to_move B, high_water 0, stones 1
+   . . .
+  . . . .
+ . . . . .
+  . . . .
+   . . .
+B
+4944077214
+
+real	110m51.142s
+user	110m48.725s
+sys	0m0.080s
+*/
