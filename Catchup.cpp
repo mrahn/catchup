@@ -78,9 +78,6 @@ namespace
       void normal();
 
     private:
-      static std::vector<std::vector<int>> const _neighbour;
-      static std::vector<std::vector<int>> const _translations;
-
       friend class show<SIZE>;
 
       int _depth;
@@ -92,6 +89,9 @@ namespace
       int max_sizes_of_components (std::vector<int> fields) const;
       player::player in_front() const;
     };
+
+    template<int SIZE> std::vector<std::vector<int>> const& translations();
+    template<int SIZE> std::vector<std::vector<int>> const& neighbours();
   }
 
   namespace point
@@ -332,7 +332,7 @@ namespace
 
       std::copy (_stone, _stone + num_fields (SIZE), minimum);
 
-      for (std::vector<int> const& translation : _translations)
+      for (std::vector<int> const& translation : translations<SIZE>())
       {
         player::player translated[num_fields (SIZE)];
 
@@ -381,7 +381,7 @@ namespace
           {
             int const f (stack[--top]);
 
-            for (int n : _neighbour[f])
+            for (int n : neighbours<SIZE>()[f])
             {
               if (_stone[n] == player && !seen[n])
               {
@@ -429,7 +429,7 @@ namespace
           {
             int const f (stack[player][--top[player]]);
 
-            for (int n : _neighbour[f])
+            for (int n : neighbours<SIZE>()[f])
             {
               if (_stone[n] == player && !seen[player][n])
               {
@@ -499,7 +499,7 @@ namespace
         return m;
       }
 
-      std::vector<std::vector<int>> neighbours (int size)
+      std::vector<std::vector<int>> make_neighbours (int size)
       {
         std::vector<point::point> const points (point::plane (size));
         std::map<point::point, int> const id_by_point (numbered (points));
@@ -552,13 +552,19 @@ namespace
       }
     }
 
-    template<int SIZE>
-    std::vector<std::vector<int>>
-    const board<SIZE>::_neighbour {neighbours (SIZE)};
+    template<int SIZE> std::vector<std::vector<int>> const& neighbours()
+    {
+      static std::vector<std::vector<int>> const ns {make_neighbours (SIZE)};
 
-    template<int SIZE>
-    std::vector<std::vector<int>>
-    const board<SIZE>::_translations {make_translations (SIZE)};
+      return ns;
+    };
+
+    template<int SIZE> std::vector<std::vector<int>> const& translations()
+    {
+      static std::vector<std::vector<int>> const ts {make_translations (SIZE)};
+
+      return ts;
+    }
 
     template<int SIZE>
     class show : public stream_modifier<board<SIZE>>
