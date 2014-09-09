@@ -290,70 +290,75 @@ namespace
         return max;
       }
 
-      std::vector<int> sizes_of_components_of (player::player player) const
+      player::player in_front() const
       {
-        std::stack<int> stack;
-        std::vector<bool> seen (point::plane_size (SIZE), false);
-        std::vector<int> sizes;
+        std::vector<std::stack<int>> stack (2);
+        std::vector<std::vector<bool>> seen
+          (2, std::vector<bool> (point::plane_size (SIZE), false));
+        std::vector<std::vector<int>> sizes (2);
 
         for (int field (0); field < point::plane_size (SIZE); ++field)
         {
-          if (!seen[field] && _stone[field] == player)
+          player::player const player (_stone[field]);
+
+          if (player != player::None && !seen[player][field])
           {
             int size (0);
-            player::player const player (_stone[field]);
 
-            stack.push (field);
+            stack[player].push (field);
             ++size;
-            seen[field] = true;
+            seen[player][field] = true;
 
-            while (!stack.empty())
+            while (!stack[player].empty())
             {
-              int const f (stack.top()); stack.pop();
+              int const f (stack[player].top()); stack[player].pop();
 
               for (int n : _neighbour[f])
               {
-                if (_stone[n] == player && !seen[n])
+                if (_stone[n] == player && !seen[player][n])
                 {
-                  stack.push (n);
+                  stack[player].push (n);
                   ++size;
-                  seen[n] = true;
+                  seen[player][n] = true;
                 }
               }
             }
 
-            sizes.emplace_back (size);
+            sizes[player].emplace_back (size);
           }
         }
-        std::sort (sizes.begin(), sizes.end(), std::greater<int>());
-        return sizes;
-      }
 
-      player::player in_front() const
-      {
-        std::vector<int> const b (sizes_of_components_of (player::Blue));
-        std::vector<int> const o (sizes_of_components_of (player::Orange));
+        for (player::player player : {player::Blue, player::Orange})
+        {
+          std::sort
+            (sizes[player].begin(), sizes[player].end(), std::greater<int>());
+        }
 
-        std::vector<int>::const_iterator b_pos (b.begin());
-        std::vector<int>::const_iterator o_pos (o.begin());
+        std::vector<int>::const_iterator b_pos (sizes[player::Blue].begin());
+        std::vector<int>::const_iterator o_pos (sizes[player::Orange].begin());
 
-        while (b_pos != b.end() && o_pos != o.end() && *b_pos == *o_pos)
+        while (  b_pos != sizes[player::Blue].end()
+              && o_pos != sizes[player::Orange].end()
+              && *b_pos == *o_pos
+              )
         {
           ++b_pos;
           ++o_pos;
         }
 
-        if (b_pos != b.end() && o_pos != o.end())
+        if (  b_pos != sizes[player::Blue].end()
+           && o_pos != sizes[player::Orange].end()
+           )
         {
           return (*b_pos > *o_pos) ? player::Blue : player::Orange;
         }
 
-        if (b_pos != b.end())
+        if (b_pos != sizes[player::Blue].end())
         {
           return player::Blue;
         }
 
-        if (o_pos != o.end())
+        if (o_pos != sizes[player::Orange].end())
         {
           return player::Orange;
         }
