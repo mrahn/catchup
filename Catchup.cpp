@@ -492,7 +492,7 @@ namespace
       {
         std::vector<point::point> const points (point::plane (size));
         std::map<point::point, int> const id_by_point (numbered (points));
-        std::vector<std::vector<int>> ns (points.size());
+        std::vector<std::vector<int>> ns (point::plane_size (size));
         int k (0);
 
         for (point::point const& p : points)
