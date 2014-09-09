@@ -268,8 +268,47 @@ namespace
 #undef NEXT_FREE_FIELD
       }
 
+      void normal()
+      {
+        std::vector<player::player> minimum (_stone);
+
+        for (int axis (0); axis < 6; ++axis)
+        {
+          std::vector<player::player> mirrored (point::plane_size (SIZE));
+
+          for (int field (0); field < point::plane_size (SIZE); ++field)
+          {
+            mirrored[_mirror[axis][field]] = _stone[field];
+          }
+
+          if (mirrored < minimum)
+          {
+            minimum = mirrored;
+          }
+        }
+
+        for (int axis (0); axis < 6; ++axis)
+        {
+          std::vector<player::player> mirrored_rotated (point::plane_size (SIZE));
+
+          for (int field (0); field < point::plane_size (SIZE); ++field)
+          {
+            mirrored_rotated[_mirror[axis][_rotate60[field]]] = _stone[field];
+          }
+
+          if (mirrored_rotated < minimum)
+          {
+            minimum = mirrored_rotated;
+          }
+        }
+
+        _stone = minimum;
+      }
+
     private:
       static std::vector<std::vector<int>> const _neighbour;
+      static std::vector<int> const _rotate60;
+      static std::vector<std::vector<int>> const _mirror;
 
       friend class show<SIZE>;
 
@@ -433,11 +472,50 @@ namespace
 
         return ns;
       }
+
+      std::vector<int> make_rotate60 (int size)
+      {
+        std::vector<point::point> const points (point::plane (size));
+        std::map<point::point, int> const id_by_point (numbered (points));
+        std::vector<int> rs (points.size());
+
+        for (int field (0); field < point::plane_size (size); ++field)
+        {
+          rs[field] = id_by_point.at (point::rotate60 (points[field]));
+        }
+
+        return rs;
+      }
+
+      std::vector<std::vector<int>> make_mirror (int size)
+      {
+        std::vector<point::point> const points (point::plane (size));
+        std::map<point::point, int> const id_by_point (numbered (points));
+        std::vector<std::vector<int>> ms (6, std::vector<int> (points.size()));
+
+        for (int axis (0); axis < 6; ++axis)
+        {
+          for (int field (0); field < point::plane_size (size); ++field)
+          {
+            ms[axis][field] =
+              id_by_point.at (point::mirror (points[field], axis));
+          }
+        }
+
+        return ms;
+      }
     }
 
     template<int SIZE>
     std::vector<std::vector<int>>
     const board<SIZE>::_neighbour {neighbours (SIZE)};
+
+    template<int SIZE>
+    std::vector<int> const board<SIZE>::_rotate60 {make_rotate60 (SIZE)};
+
+    template<int SIZE>
+    std::vector<std::vector<int>>
+    const board<SIZE>::_mirror {make_mirror (SIZE)};
 
     template<int SIZE>
     class show
