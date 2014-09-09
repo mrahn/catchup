@@ -363,8 +363,10 @@ namespace
     int board<SIZE>::max_sizes_of_components (std::vector<int> fields) const
     {
       std::stack<int> stack;
-      std::vector<bool> seen (point::plane_size (SIZE), false);
+      bool seen[point::plane_size (SIZE)];
       int max (0);
+
+      std::fill (seen, seen + point::plane_size (SIZE), false);
 
       for (int field : fields)
       {
@@ -403,9 +405,11 @@ namespace
     player::player board<SIZE>::in_front() const
     {
       std::vector<std::stack<int>> stack (2);
-      std::vector<std::vector<bool>> seen
-        (2, std::vector<bool> (point::plane_size (SIZE), false));
+      bool seen[2][point::plane_size (SIZE)];
       std::vector<std::vector<int>> sizes (2);
+
+      std::fill (seen[0], seen[0] + point::plane_size (SIZE), false);
+      std::fill (seen[1], seen[1] + point::plane_size (SIZE), false);
 
       for (int field (0); field < point::plane_size (SIZE); ++field)
       {
