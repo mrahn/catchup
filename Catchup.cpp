@@ -272,33 +272,30 @@ namespace
       {
         std::vector<player::player> minimum (_stone);
 
+        std::vector<std::vector<int>> translations
+          (12, std::vector<int> (point::plane_size (SIZE)));
+
         for (int axis (0); axis < 6; ++axis)
         {
-          std::vector<player::player> mirrored (point::plane_size (SIZE));
-
           for (int field (0); field < point::plane_size (SIZE); ++field)
           {
-            mirrored[field] = _stone[_mirror[axis][field]];
-          }
-
-          if (mirrored < minimum)
-          {
-            minimum = mirrored;
+            translations[0 + axis][field] = _mirror[axis][field];
+            translations[6 + axis][field] = _mirror[axis][_rotate60[field]];
           }
         }
 
-        for (int axis (0); axis < 6; ++axis)
+        for (std::vector<int> const& translation : translations)
         {
-          std::vector<player::player> mirrored_rotated (point::plane_size (SIZE));
+          std::vector<player::player> translated (point::plane_size (SIZE));
 
           for (int field (0); field < point::plane_size (SIZE); ++field)
           {
-            mirrored_rotated[field] = _stone[_mirror[axis][_rotate60[field]]];
+            translated[field] = _stone[translation[field]];
           }
 
-          if (mirrored_rotated < minimum)
+          if (translated < minimum)
           {
-            minimum = mirrored_rotated;
+            minimum = translated;
           }
         }
 
