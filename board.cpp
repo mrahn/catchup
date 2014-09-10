@@ -354,22 +354,62 @@ namespace
         std::vector<std::vector<int>> ts
           (11, std::vector<int> (num_fields (size)));
 
-        for (int axis (1); axis < 6; ++axis)
+        int x[num_fields (size)];
+        int y[num_fields (size)];
+        int z[num_fields (size)];
+
         {
-          for (int field (0); field < num_fields (size); ++field)
+          int p (0);
+
+          for (int px (1 - size); px < size; ++px)
           {
-            ts[axis - 1][field] =
-              id_by_point.at (point::mirror (points[field], axis));
+            for (int py (1 - size); py < size; ++py)
+            {
+              for (int pz (1 - size); pz < size; ++pz)
+              {
+                if (px + py + pz == 0)
+                {
+                  x[p] = px;
+                  y[p] = py;
+                  z[p] = pz;
+
+                  ++p;
+                }
+              }
+            }
           }
         }
 
-        for (int axis (0); axis < 6; ++axis)
+        for (int field (0); field < num_fields (size); ++field)
         {
-          for (int field (0); field < num_fields (size); ++field)
-          {
-            ts[axis + 5][field] =
-              id_by_point.at (point::mirror (points[id_by_point.at (point::rotate60 (points[field]))], axis));
-          }
+          ts[0][field] =
+            id_by_point.at (point::point (x[field], z[field], y[field]));
+          ts[1][field] =
+            id_by_point.at (point::point (y[field], x[field], z[field]));
+          ts[2][field] =
+            id_by_point.at (point::point (y[field], z[field], x[field]));
+          ts[3][field] =
+            id_by_point.at (point::point (z[field], x[field], y[field]));
+          ts[4][field] =
+            id_by_point.at (point::point (z[field], y[field], x[field]));
+        }
+
+        for (int field (0); field < num_fields (size); ++field)
+        {
+          int const rid (id_by_point.at (point::rotate60 (points[field])));
+
+          ts[5][field] =
+            id_by_point.at (point::point (x[rid], y[rid], z[rid]));
+          ts[6][field] =
+            id_by_point.at (point::point (x[rid], z[rid], y[rid]));
+          ts[7][field] =
+            id_by_point.at (point::point (y[rid], x[rid], z[rid]));
+          ts[8][field] =
+            id_by_point.at (point::point (y[rid], z[rid], x[rid]));
+          ts[9][field] =
+            id_by_point.at (point::point (z[rid], x[rid], y[rid]));
+          ts[10][field] =
+            id_by_point.at (point::point (z[rid], y[rid], x[rid]));
         }
 
         return ts;

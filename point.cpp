@@ -38,20 +38,5 @@ namespace
                    , (   -x (p) + 2 * y (p) + 2 * z (p)) / 3
                    );
     }
-
-    point mirror (point const& p, int k)
-    {
-      switch (k)
-      {
-      case 0: return point (x (p), y (p), z (p));
-      case 1: return point (x (p), z (p), y (p));
-      case 2: return point (y (p), x (p), z (p));
-      case 3: return point (y (p), z (p), x (p));
-      case 4: return point (z (p), x (p), y (p));
-      case 5: return point (z (p), y (p), x (p));
-      }
-
-      abort();
-    }
   }
 }

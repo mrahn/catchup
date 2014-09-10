@@ -19,7 +19,6 @@ namespace
     int z (point const&);
     std::vector<point> plane (int size);
     point rotate60 (point const&);
-    point mirror (point const&, int axis);
   }
 }
 
