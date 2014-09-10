@@ -87,7 +87,8 @@ namespace
 
       void put (std::vector<int>);
       void unput (std::vector<int>, int available_stones, int high_water);
-      player::player winner();
+      player::player winner (int);
+      player::player winner() { return winner (0); }
       void normal();
 
     private:
@@ -245,7 +246,7 @@ namespace
     }
 
     template<int SIZE>
-    player::player board<SIZE>::winner()
+    player::player board<SIZE>::winner (int w)
     {
 #define NEXT_FREE_FIELD(_var)                   \
       while (  _var < num_fields (SIZE)         \
@@ -254,7 +255,18 @@ namespace
       {                                         \
         ++_var;                                 \
       }
+#define SHOW()                                                  \
+      if (w == 0)                                               \
+      {                                                         \
+        std::cout << "* " << c++ << " " << _puts << std::endl;  \
+                                                                \
+        if (won == player::other (_to_move))                    \
+        {                                                       \
+          std::cout << show<SIZE> (*this) << std::endl;         \
+        }                                                       \
+      }
 
+      int c (0);
       int const available_stones (_available_stones);
       int const high_water (_high_water);
 
@@ -274,7 +286,9 @@ namespace
             {
               put ({f, g, h});
 
-              player::player const won (winner());
+              player::player const won (winner (w + 1));
+
+              SHOW();
 
               unput ({f, g, h}, available_stones, high_water);
 
@@ -305,7 +319,9 @@ namespace
           {
             put ({f, g});
 
-            player::player const won (winner());
+            player::player const won (winner (w + 1));
+
+            SHOW();
 
             unput ({f, g}, available_stones, high_water);
 
@@ -328,7 +344,9 @@ namespace
         {
           put ({f});
 
-          player::player const won (winner());
+          player::player const won (winner (w + 1));
+
+          SHOW();
 
           unput ({f}, available_stones, high_water);
 
@@ -343,6 +361,7 @@ namespace
 
       return _available_stones ? player::other (_to_move) : in_front();
 
+#undef SHOW
 #undef NEXT_FREE_FIELD
     }
 
