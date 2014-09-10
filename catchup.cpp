@@ -1,5 +1,6 @@
 // mirko.rahn@web.de
 
+#include <constant.hpp>
 #include <stream_modifier.hpp>
 #include <point.hpp>
 #include <player.hpp>
@@ -17,9 +18,6 @@ namespace
 {
   namespace board
   {
-    constexpr int num_fields (int size);
-    constexpr int num_neighbours (int size);
-
     template<int SIZE> class show;
 
     template<int SIZE>
@@ -70,15 +68,6 @@ namespace
 
   namespace board
   {
-    constexpr int num_fields (int size)
-    {
-      return 3 * size * (size - 1) + (size < 1 ? size : 1);
-    }
-    constexpr int num_neighbours (int size)
-    {
-      return (size < 1) ? 0 : 6 * (size - 1) * (3 * size - 2);
-    }
-
     template<int SIZE>
     board<SIZE>::board (int const* neighbours)
       : _puts (0)

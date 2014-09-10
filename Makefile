@@ -11,6 +11,7 @@ CXXFLAGS += $(addprefix -I , $(INCLUDEPATH))
 catchup.o: stream_modifier.hpp
 catchup.o: point.hpp point.cpp
 catchup.o: player.hpp player.cpp
+catchup.o: constant.hpp
 
 catchup.exe: catchup.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
