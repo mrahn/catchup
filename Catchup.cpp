@@ -601,16 +601,16 @@ namespace
 
         int line_x (0);
         int k (0);
-        int prefix (SIZE - 1);
-        int delta (-1);
+        std::size_t prefix (SIZE - 1);
+        bool shrink (true);
 
-        auto const print_prefix ([&os, &prefix, &delta]
+        auto const print_prefix ([&os, &prefix, &shrink]
                                 {
                                   os << std::string (prefix, ' ');
-                                  prefix += delta;
+                                  prefix = shrink ? prefix - 1 : prefix + 1;
                                   if (prefix == 0)
                                   {
-                                    delta = -delta;
+                                    shrink = false;
                                   }
                                 }
                                 );
