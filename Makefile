@@ -9,6 +9,7 @@ CXXFLAGS += -O3
 CXXFLAGS += $(addprefix -I , $(INCLUDEPATH))
 
 catchup.o: stream_modifier.hpp
+catchup.o: point.hpp
 
 catchup.exe: catchup.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
