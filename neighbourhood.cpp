@@ -2,33 +2,57 @@
 
 #include <neighbourhood.hpp>
 
-#include <point.hpp>
-
 namespace
 {
   template<int SIZE>
   neighbourhood<SIZE>::neighbourhood()
     : _neighbours()
   {
-    std::vector<point::point> const points (point::plane (SIZE));
-
     int k (num_fields (SIZE) + 1);
-    int f (0);
+    int p (0);
 
-    for (point::point const& p : points)
+    for (int px (1 - SIZE); px < SIZE; ++px)
     {
-      _neighbours[f++] = k;
-
-      for (int q (0); q < num_fields (SIZE); ++q)
+      for (int py (1 - SIZE); py < SIZE; ++py)
       {
-        if (point::distance (p, points[q]) == 1)
+        for (int pz (1 - SIZE); pz < SIZE; ++pz)
         {
-          _neighbours[k++] = q;
+          if (px + py + pz == 0)
+          {
+            _neighbours[p] = k;
+
+            int q (0);
+
+            for (int qx (1 - SIZE); qx < SIZE; ++qx)
+            {
+              for (int qy (1 - SIZE); qy < SIZE; ++qy)
+              {
+                for (int qz (1 - SIZE); qz < SIZE; ++qz)
+                {
+                  if (qx + qy + qz == 0)
+                  {
+                    if (( std::abs (px - qx)
+                        + std::abs (py - qy)
+                        + std::abs (pz - qz)
+                        ) == 2
+                       )
+                    {
+                      _neighbours[k++] = q;
+                    }
+
+                    ++q;
+                  }
+                }
+              }
+            }
+
+            ++p;
+          }
         }
       }
     }
 
-    _neighbours[f] = k;
+    _neighbours[p] = k;
   }
   template<int SIZE>
   int const* neighbourhood<SIZE>::neighbours() const
