@@ -4,7 +4,7 @@ CXXFLAGS += -Wall
 CXXFLAGS += -Wextra
 CXXFLAGS += -O3
 
-Catchup.exe: Catchup.o
+catchup.exe: catchup.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 %.run: %.exe
@@ -15,4 +15,4 @@ Catchup.exe: Catchup.o
 clean:
 	$(RM) *.o
 	$(RM) *.prof
-	$(RM) Catchup.exe
+	$(RM) catchup.exe
