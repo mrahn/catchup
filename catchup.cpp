@@ -4,6 +4,9 @@
 #include <point.hpp>
 #include <player.hpp>
 
+#include <point.cpp>
+#include <player.cpp>
+
 #include <algorithm>
 #include <iostream>
 #include <map>
