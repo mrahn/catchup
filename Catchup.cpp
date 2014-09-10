@@ -666,16 +666,70 @@ namespace
   }
 }
 
-int main()
+int main_lg1657870()
+{
+  board::neighbourhood<5> const neighbourhood;
+
+  board::board<5> board (neighbourhood.neighbours());
+
+  board.put ({12});
+  board.put ({16,37});
+  board.put ({21,31});
+  board.put ({22,39});
+  board.put ({52,41});
+  board.put ({48,20});
+  board.put ({15,7});
+  board.put ({8,32});
+  board.put ({28,44});
+  board.put ({23,30});
+  board.put ({36,19,14});
+  board.put ({45,51});
+  board.put ({9,10});
+  board.put ({13,29});
+  board.put ({6,17,25});
+  board.put ({33,34,50});
+  board.put ({43,40,47});
+
+  std::cout << board::show<5> (board) << std::endl;
+
+  std::cout << player::show (board.winner()) << std::endl;
+  std::cout << board._puts << std::endl;
+
+  return 0;
+}
+
+template<int SIZE>
+int main_full()
+{
+  board::neighbourhood<SIZE> const neighbourhood;
+
+  board::board<SIZE> board (neighbourhood.neighbours());
+
+  std::cout << board::show<SIZE> (board) << std::endl;
+
+  std::cout << player::show (board.winner()) << std::endl;
+  std::cout << board._puts << std::endl;
+
+  return 0;
+}
+
+int main3()
 {
   board::neighbourhood<3> const neighbourhood;
 
   board::board<3> board (neighbourhood.neighbours());
   board.put ({4});
   board.put ({5,8});
-  board.normal();
 
   std::cout << board::show<3> (board) << std::endl;
 
   std::cout << player::show (board.winner()) << std::endl;
+  std::cout << board._puts << std::endl;
+
+  return 0;
+}
+
+int main()
+{
+  return main3();
 }
