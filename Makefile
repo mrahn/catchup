@@ -10,16 +10,9 @@ Catchup.exe: Catchup.o
 %.run: %.exe
 	@/usr/bin/time -f '$^: %e sec(s)' ./$^
 
-MAIN = Main
-
-$(MAIN): $(wildcard *.hs) Makefile
-	ghc --make -O3 $(MAIN).hs
-
 .PHONY: clean
 
 clean:
 	$(RM) *.o
-	$(RM) *.hi
 	$(RM) *.prof
-	$(RM) $(MAIN)
 	$(RM) Catchup.exe
