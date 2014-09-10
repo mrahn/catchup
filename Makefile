@@ -14,6 +14,7 @@ catchup.o: player.hpp player.cpp
 catchup.o: constant.hpp
 catchup.o: neighbourhood.hpp neighbourhood.cpp
 catchup.o: numbered.hpp numbered.cpp
+catchup.o: board.hpp board.cpp
 
 catchup.exe: catchup.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
