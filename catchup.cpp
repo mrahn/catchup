@@ -5,7 +5,6 @@
 
 #include <board.cpp>
 #include <neighbourhood.cpp>
-#include <numbered.cpp>
 #include <player.cpp>
 #include <point.cpp>
 

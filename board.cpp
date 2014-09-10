@@ -3,7 +3,6 @@
 #include <board.hpp>
 
 #include <constant.hpp>
-#include <numbered.hpp>
 #include <player.hpp>
 #include <point.hpp>
 #include <stream_modifier.hpp>
@@ -348,15 +347,13 @@ namespace
     {
       std::vector<std::vector<int>> make_translations (int size)
       {
-        std::vector<point::point> const points (point::plane (size));
-        std::map<point::point, int> const id_by_point (numbered (points));
-
         std::vector<std::vector<int>> ts
           (11, std::vector<int> (num_fields (size)));
 
         int x[num_fields (size)];
         int y[num_fields (size)];
         int z[num_fields (size)];
+        int id[num_fields (size)][num_fields (size)][num_fields (size)];
 
         {
           int p (0);
@@ -373,6 +370,8 @@ namespace
                   y[p] = py;
                   z[p] = pz;
 
+                  id[px][py][pz] = p;
+
                   ++p;
                 }
               }
@@ -382,34 +381,22 @@ namespace
 
         for (int field (0); field < num_fields (size); ++field)
         {
-          ts[0][field] =
-            id_by_point.at (point::point (x[field], z[field], y[field]));
-          ts[1][field] =
-            id_by_point.at (point::point (y[field], x[field], z[field]));
-          ts[2][field] =
-            id_by_point.at (point::point (y[field], z[field], x[field]));
-          ts[3][field] =
-            id_by_point.at (point::point (z[field], x[field], y[field]));
-          ts[4][field] =
-            id_by_point.at (point::point (z[field], y[field], x[field]));
-        }
+          ts[0][field] = id[x[field]][z[field]][y[field]];
+          ts[1][field] = id[y[field]][x[field]][z[field]];
+          ts[2][field] = id[y[field]][z[field]][x[field]];
+          ts[3][field] = id[z[field]][x[field]][y[field]];
+          ts[4][field] = id[z[field]][y[field]][x[field]];
 
-        for (int field (0); field < num_fields (size); ++field)
-        {
-          int const rid (id_by_point.at (point::rotate60 (points[field])));
+          point::point const r (point::rotate60 (point::point (x[field], y[field], z[field])));
 
-          ts[5][field] =
-            id_by_point.at (point::point (x[rid], y[rid], z[rid]));
-          ts[6][field] =
-            id_by_point.at (point::point (x[rid], z[rid], y[rid]));
-          ts[7][field] =
-            id_by_point.at (point::point (y[rid], x[rid], z[rid]));
-          ts[8][field] =
-            id_by_point.at (point::point (y[rid], z[rid], x[rid]));
-          ts[9][field] =
-            id_by_point.at (point::point (z[rid], x[rid], y[rid]));
-          ts[10][field] =
-            id_by_point.at (point::point (z[rid], y[rid], x[rid]));
+          int const rid (id[point::x (r)][point::y (r)][point::z (r)]);
+
+          ts[5][field] = id[x[rid]][y[rid]][z[rid]];
+          ts[6][field] = id[x[rid]][z[rid]][y[rid]];
+          ts[7][field] = id[y[rid]][x[rid]][z[rid]];
+          ts[8][field] = id[y[rid]][z[rid]][x[rid]];
+          ts[9][field] = id[z[rid]][x[rid]][y[rid]];
+          ts[10][field] = id[z[rid]][y[rid]][x[rid]];
         }
 
         return ts;
