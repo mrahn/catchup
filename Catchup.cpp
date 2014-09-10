@@ -655,19 +655,3 @@ int main()
 
   std::cout << player::show (board.winner()) << std::endl;
 }
-
-/*
-rahn@brank:~/catchup$ g++ -std=c++11 -Wall -Wextra -O3 -fno-exceptions -pg Catchup.cpp -o Catchup.exe && time ./Catchup.exe
-to_move B, high_water 0, stones 1
-   . . .
-  . . . .
- . . . . .
-  . . . .
-   . . .
-B
-4944077214
-
-real	110m51.142s
-user	110m48.725s
-sys	0m0.080s
-*/
