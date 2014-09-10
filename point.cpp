@@ -7,8 +7,6 @@ namespace
   namespace point
   {
     int x (point const& p) { return std::get<0> (p); }
-    int y (point const& p) { return std::get<1> (p); }
-    int z (point const& p) { return std::get<2> (p); }
 
     std::vector<point> plane (int size)
     {
@@ -29,14 +27,6 @@ namespace
       }
 
       return p;
-    }
-
-    point rotate60 (point const& p)
-    {
-      return point ( (2 * x (p) -     y (p) + 2 * z (p)) / 3
-                   , (2 * x (p) + 2 * y (p) -     z (p)) / 3
-                   , (   -x (p) + 2 * y (p) + 2 * z (p)) / 3
-                   );
     }
   }
 }

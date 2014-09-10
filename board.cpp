@@ -387,9 +387,10 @@ namespace
           ts[3][field] = id[z[field]][x[field]][y[field]];
           ts[4][field] = id[z[field]][y[field]][x[field]];
 
-          point::point const r (point::rotate60 (point::point (x[field], y[field], z[field])));
-
-          int const rid (id[point::x (r)][point::y (r)][point::z (r)]);
+          int const rid (id[(2*x[field] -   y[field] + 2*z[field]) / 3]
+                           [(2*x[field] + 2*y[field] -   z[field]) / 3]
+                           [( -x[field] + 2*y[field] + 2*z[field]) / 3]
+                        );
 
           ts[5][field] = id[x[rid]][y[rid]][z[rid]];
           ts[6][field] = id[x[rid]][z[rid]][y[rid]];

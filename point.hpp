@@ -15,10 +15,7 @@ namespace
     typedef std::tuple<int, int, int> point;
 
     int x (point const&);
-    int y (point const&);
-    int z (point const&);
     std::vector<point> plane (int size);
-    point rotate60 (point const&);
   }
 }
 
