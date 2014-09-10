@@ -76,6 +76,8 @@ namespace
     class board
     {
     public:
+      unsigned long _puts;
+
       board (board const&) = delete;
       board operator= (board const&) = delete;
       board (board&&) = delete;
@@ -196,7 +198,8 @@ namespace
 
     template<int SIZE>
     board<SIZE>::board (int const* neighbours)
-      : _depth (0)
+      : _puts (0)
+      , _depth (0)
       , _available_stones (std::min (num_fields (SIZE), 1))
       , _to_move (player::Blue)
       , _high_water (0)
@@ -209,6 +212,8 @@ namespace
     template<int SIZE>
     void board<SIZE>::put (std::vector<int> fields)
     {
+      ++_puts;
+
       for (int field : fields)
       {
         _stone[field] = _to_move;
