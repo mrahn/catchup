@@ -2,7 +2,6 @@
 
 #include <neighbourhood.hpp>
 
-#include <numbered.hpp>
 #include <point.hpp>
 
 namespace
@@ -12,7 +11,6 @@ namespace
     : _neighbours()
   {
     std::vector<point::point> const points (point::plane (SIZE));
-    std::map<point::point, int> const id_by_point (numbered (points));
 
     int k (num_fields (SIZE) + 1);
     int f (0);
@@ -21,11 +19,11 @@ namespace
     {
       _neighbours[f++] = k;
 
-      for (point::point const& q : points)
+      for (int q (0); q < num_fields (SIZE); ++q)
       {
-        if (point::distance (p, q) == 1)
+        if (point::distance (p, points[q]) == 1)
         {
-          _neighbours[k++] = id_by_point.at (q);
+          _neighbours[k++] = q;
         }
       }
     }
