@@ -2,6 +2,7 @@
 
 #include <stream_modifier.hpp>
 #include <point.hpp>
+#include <player.hpp>
 
 #include <algorithm>
 #include <iostream>
@@ -11,23 +12,6 @@
 
 namespace
 {
-  namespace player
-  {
-    typedef enum {Blue = 0, Orange = 1, None} player;
-
-    player other (player);
-
-    class show : public stream_modifier<player>
-    {
-    public:
-      show (player const&);
-      virtual std::ostream& operator() (std::ostream&) const override;
-
-    private:
-      player const& _player;
-    };
-  }
-
   namespace board
   {
     constexpr int num_fields (int size);
@@ -79,25 +63,6 @@ namespace
     };
 
     template<int SIZE> std::vector<std::vector<int>> const& translations();
-  }
-
-  namespace player
-  {
-    player other (player p)
-    {
-      return (p == Blue) ? Orange : Blue;
-    }
-
-    show::show (player const& player)
-      : _player (player)
-    {}
-    std::ostream& show::operator() (std::ostream& os) const
-    {
-      return os << ( (_player == Blue) ? 'B'
-                   : (_player == Orange) ? 'O'
-                   : '.'
-                   );
-    }
   }
 
   namespace board
