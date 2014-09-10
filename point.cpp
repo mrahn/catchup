@@ -31,14 +31,6 @@ namespace
       return p;
     }
 
-    int distance (point const& a, point const& b)
-    {
-      return ( std::abs (x (a) - x (b))
-             + std::abs (y (a) - y (b))
-             + std::abs (z (a) - z (b))
-             ) / 2;
-    }
-
     point rotate60 (point const& p)
     {
       return point ( (2 * x (p) -     y (p) + 2 * z (p)) / 3
