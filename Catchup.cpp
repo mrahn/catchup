@@ -666,6 +666,17 @@ namespace
   }
 }
 
+template<int SIZE>
+int winner (board::board<SIZE>* board)
+{
+  std::cout << board::show<SIZE> (*board) << std::endl;
+
+  std::cout << player::show (board->winner()) << std::endl;
+  std::cout << "Put: " << board->_puts << std::endl;
+
+  return 0;
+}
+
 int main_lg1657870()
 {
   board::neighbourhood<5> const neighbourhood;
@@ -690,12 +701,7 @@ int main_lg1657870()
   board.put ({33,34,50});
   board.put ({43,40,47});
 
-  std::cout << board::show<5> (board) << std::endl;
-
-  std::cout << player::show (board.winner()) << std::endl;
-  std::cout << board._puts << std::endl;
-
-  return 0;
+  return winner<5> (&board);
 }
 
 template<int SIZE>
@@ -705,12 +711,7 @@ int main_full()
 
   board::board<SIZE> board (neighbourhood.neighbours());
 
-  std::cout << board::show<SIZE> (board) << std::endl;
-
-  std::cout << player::show (board.winner()) << std::endl;
-  std::cout << board._puts << std::endl;
-
-  return 0;
+  return winner<SIZE> (&board);
 }
 
 int main3()
@@ -721,12 +722,7 @@ int main3()
   board.put ({4});
   board.put ({5,8});
 
-  std::cout << board::show<3> (board) << std::endl;
-
-  std::cout << player::show (board.winner()) << std::endl;
-  std::cout << board._puts << std::endl;
-
-  return 0;
+  return winner<3> (&board);
 }
 
 int main()
