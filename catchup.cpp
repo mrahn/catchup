@@ -1,12 +1,16 @@
 // mirko.rahn@web.de
 
 #include <constant.hpp>
-#include <stream_modifier.hpp>
-#include <point.hpp>
+#include <neighbourhood.hpp>
+#include <numbered.hpp>
 #include <player.hpp>
+#include <point.hpp>
+#include <stream_modifier.hpp>
 
-#include <point.cpp>
+#include <neighbourhood.cpp>
+#include <numbered.cpp>
 #include <player.cpp>
+#include <point.cpp>
 
 #include <algorithm>
 #include <iostream>
@@ -19,16 +23,6 @@ namespace
   namespace board
   {
     template<int SIZE> class show;
-
-    template<int SIZE>
-    class neighbourhood
-    {
-    public:
-      neighbourhood();
-      int const* neighbours() const;
-    private:
-      int _neighbours[num_fields (SIZE) + 1 + num_neighbours (SIZE)];
-    };
 
     template<int SIZE>
     class board
@@ -398,20 +392,6 @@ namespace
 
     namespace
     {
-      std::map<point::point, int>
-        numbered (std::vector<point::point> const& ps)
-      {
-        std::map<point::point, int> m;
-        int k (0);
-
-        for (point::point const& p : ps)
-        {
-          m.emplace (p, k++);
-        }
-
-        return m;
-      }
-
       std::vector<std::vector<int>> make_translations (int size)
       {
         std::vector<point::point> const points (point::plane (size));
@@ -440,37 +420,6 @@ namespace
 
         return ts;
       }
-    }
-
-    template<int SIZE>
-    neighbourhood<SIZE>::neighbourhood()
-      : _neighbours()
-    {
-      std::vector<point::point> const points (point::plane (SIZE));
-      std::map<point::point, int> const id_by_point (numbered (points));
-
-      int k (num_fields (SIZE) + 1);
-      int f (0);
-
-      for (point::point const& p : points)
-      {
-        _neighbours[f++] = k;
-
-        for (point::point const& q : points)
-        {
-          if (point::distance (p, q) == 1)
-          {
-            _neighbours[k++] = id_by_point.at (q);
-          }
-        }
-      }
-
-      _neighbours[f] = k;
-    }
-    template<int SIZE>
-    int const* neighbourhood<SIZE>::neighbours() const
-    {
-      return _neighbours;
     }
 
     template<int SIZE> std::vector<std::vector<int>> const& translations()
@@ -550,7 +499,7 @@ int winner (board::board<SIZE>* board)
 
 int main_lg1657870()
 {
-  board::neighbourhood<5> const neighbourhood;
+  neighbourhood<5> const neighbourhood;
 
   board::board<5> board (neighbourhood.neighbours());
 
@@ -578,7 +527,7 @@ int main_lg1657870()
 template<int SIZE>
 int main_full()
 {
-  board::neighbourhood<SIZE> const neighbourhood;
+  neighbourhood<SIZE> const neighbourhood;
 
   board::board<SIZE> board (neighbourhood.neighbours());
 
@@ -587,7 +536,7 @@ int main_full()
 
 int main3()
 {
-  board::neighbourhood<3> const neighbourhood;
+  neighbourhood<3> const neighbourhood;
 
   board::board<3> board (neighbourhood.neighbours());
   board.put ({4});

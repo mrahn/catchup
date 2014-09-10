@@ -12,6 +12,8 @@ catchup.o: stream_modifier.hpp
 catchup.o: point.hpp point.cpp
 catchup.o: player.hpp player.cpp
 catchup.o: constant.hpp
+catchup.o: neighbourhood.hpp neighbourhood.cpp
+catchup.o: numbered.hpp numbered.cpp
 
 catchup.exe: catchup.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
