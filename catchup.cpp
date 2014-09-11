@@ -12,10 +12,6 @@ int winner (board::board<SIZE>* board)
 {
   std::cout << board::show<SIZE> (*board) << std::endl;
 
-  board->normal();
-
-  std::cout << board::show<SIZE> (*board) << std::endl;
-
   std::cout << player::show (board->winner()) << std::endl;
   std::cout << "Put: " << board->_puts << std::endl;
 
