@@ -66,27 +66,19 @@ namespace
     player::player board<SIZE>::winner (int w)
     {
       player::player result (player::other (_to_move));
-      player::player minimum[num_fields (SIZE)];
 
 #define RETURN(_value)                                          \
                                                                 \
       result = (_value == _to_move) ? _to_move : result;        \
                                                                 \
+      if (is_normal())                                          \
       {                                                         \
-        std::cerr << is_normal (minimum) << " "                 \
-                  << _available_stones << " "                   \
+        std::cerr << _available_stones << " "                   \
                   << player::show (_to_move) << " ";            \
                                                                 \
         for (int field (0); field < num_fields (SIZE); ++field) \
         {                                                       \
           std::cerr << player::show (_stone[field]);            \
-        }                                                       \
-                                                                \
-        std::cerr << " ";                                       \
-                                                                \
-        for (int field (0); field < num_fields (SIZE); ++field) \
-        {                                                       \
-          std::cerr << player::show (minimum[field]);           \
         }                                                       \
                                                                 \
         std::cerr << " " << player::show (_value) << std::endl; \
@@ -218,11 +210,11 @@ namespace
     }
 
     template<int SIZE>
-    bool board<SIZE>::is_normal (player::player minimum[num_fields (SIZE)]) const
+    bool board<SIZE>::is_normal() const
     {
-      std::copy (_stone, _stone + num_fields (SIZE), minimum);
+      player::player minimum[num_fields (SIZE)];
 
-      bool is_minimum (true);
+      std::copy (_stone, _stone + num_fields (SIZE), minimum);
 
       for (std::vector<int> const& translation : translations<SIZE>())
       {
@@ -241,13 +233,11 @@ namespace
 
         if (smaller)
         {
-          std::copy (translated, translated + num_fields (SIZE), minimum);
-
-          is_minimum = false;
+          return false;
         }
       }
 
-      return is_minimum;
+      return true;
     }
 
     template<int SIZE>
