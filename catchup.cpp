@@ -4,7 +4,6 @@
 #include <neighbourhood.hpp>
 
 #include <board.cpp>
-#include <player.cpp>
 
 #include <iostream>
 

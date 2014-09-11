@@ -11,13 +11,24 @@ namespace
   {
     typedef enum {Blue = 0, Orange = 1, None} player;
 
-    player other (player);
+    player other (player p)
+    {
+      return (p == Blue) ? Orange : Blue;
+    }
 
     class show : public stream_modifier<player>
     {
     public:
-      show (player const&);
-      virtual std::ostream& operator() (std::ostream&) const override;
+      show (player const& player)
+        : _player (player)
+      {}
+      virtual std::ostream& operator() (std::ostream& os) const override
+      {
+        return os << ( (_player == Blue) ? 'B'
+                     : (_player == Orange) ? 'O'
+                     : '.'
+                     );
+      }
 
     private:
       player const& _player;
