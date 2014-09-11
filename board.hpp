@@ -31,7 +31,7 @@ namespace
       void unput (std::vector<int>, int available_stones, int high_water);
       player::player winner (int);
       player::player winner() { return winner (0); }
-      void normal();
+      bool is_normal (player::player minimum[num_fields (SIZE)]) const;
 
     private:
       friend class show<SIZE>;

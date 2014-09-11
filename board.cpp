@@ -199,11 +199,11 @@ namespace
     }
 
     template<int SIZE>
-    void board<SIZE>::normal()
+    bool board<SIZE>::is_normal (player::player minimum[num_fields (SIZE)]) const
     {
-      player::player minimum[num_fields (SIZE)];
-
       std::copy (_stone, _stone + num_fields (SIZE), minimum);
+
+      bool is_minimum (true);
 
       for (std::vector<int> const& translation : translations<SIZE>())
       {
@@ -223,10 +223,12 @@ namespace
         if (smaller)
         {
           std::copy (translated, translated + num_fields (SIZE), minimum);
+
+          is_minimum = false;
         }
       }
 
-      std::copy (minimum, minimum + num_fields (SIZE), _stone);
+      return is_minimum;
     }
 
     template<int SIZE>
