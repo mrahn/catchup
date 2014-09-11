@@ -65,6 +65,22 @@ namespace
     template<int SIZE>
     player::player board<SIZE>::winner (int w)
     {
+#define RETURN(_value)                                          \
+      std::cerr << _depth << " "                                \
+                << _available_stones << " "                     \
+                << _high_water << " "                           \
+                << player::show (_to_move) << " ";              \
+                                                                \
+      for (int field (0); field < num_fields (SIZE); ++field)   \
+      {                                                         \
+        std::cerr << player::show (_stone[field]);              \
+      }                                                         \
+                                                                \
+      std::cerr << " " << player::show (_value) << std::endl;   \
+                                                                \
+      return _value;
+#define FINAL_RETURN(_value) RETURN (_value);
+
 #define NEXT_FREE_FIELD(_var)                   \
       while (  _var < num_fields (SIZE)         \
             && _stone[_var] != player::None     \
@@ -111,7 +127,7 @@ namespace
 
               if (won == _to_move)
               {
-                return _to_move;
+                RETURN (_to_move);
               }
 
               ++h; NEXT_FREE_FIELD (h);
@@ -144,7 +160,7 @@ namespace
 
             if (won == _to_move)
             {
-              return _to_move;
+              RETURN (_to_move);
             }
 
             ++g; NEXT_FREE_FIELD (g);
@@ -169,14 +185,14 @@ namespace
 
           if (won == _to_move)
           {
-            return _to_move;
+            RETURN (_to_move);
           }
 
           ++f; NEXT_FREE_FIELD (f);
         }
       }
 
-      return _available_stones ? player::other (_to_move) : in_front();
+      FINAL_RETURN (_available_stones ? player::other (_to_move) : in_front());
 
 #undef SHOW
 #undef NEXT_FREE_FIELD

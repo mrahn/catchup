@@ -75,5 +75,5 @@ int main3()
 
 int main()
 {
-  return main_lg1657873();
+  return main_full<2>();
 }
