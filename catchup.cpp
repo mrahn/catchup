@@ -114,14 +114,14 @@ int main_full2()
 
             if (board.is_normal())
             {
-              std::cout << "* * * * " << b << " " << o1 << " " << o2 << std::endl;
               std::cout << board::show<SIZE> (board) << std::endl;
               board._puts = 0;
               player::player const w (board.winner());
               sum_puts += board._puts;
               max_puts = std::max (max_puts, board._puts);
               min_puts = std::min (min_puts, board._puts);
-              std::cout << player::show (w)
+              std::cout << "* * * * " << b << " " << o1 << " " << o2 << ":"
+                        << " " << player::show (w)
                         << " puts " << board._puts
                         << " min " << min_puts
                         << " max " << max_puts
