@@ -65,32 +65,13 @@ namespace
     template<int SIZE>
     player::player board<SIZE>::winner (int w)
     {
-      player::player result (player::other (_to_move));
-
-#define RETURN(_value)                                          \
-                                                                \
-      result = (_value == _to_move) ? _to_move : result;        \
-                                                                \
-      if (is_normal())                                          \
-      {                                                         \
-        std::cerr << _available_stones << " "                   \
-                  << player::show (_to_move) << " ";            \
-                                                                \
-        for (int field (0); field < num_fields (SIZE); ++field) \
-        {                                                       \
-          std::cerr << player::show (_stone[field]);            \
-        }                                                       \
-                                                                \
-        std::cerr << " " << player::show (_value) << std::endl; \
+#define RETURN(_value)                          \
+      if (_value == _to_move)                   \
+      {                                         \
+        return _to_move;                        \
       }
-
-#define FINAL_RETURN()                                                  \
-      RETURN ( ( result == _to_move ? result                            \
-               :  _available_stones ? result : in_front()               \
-               )                                                        \
-             );                                                         \
-                                                                        \
-      return result;
+#define FINAL_RETURN()                                          \
+      return _available_stones ? other (_to_move) : in_front()
 
 #define NEXT_FREE_FIELD(_var)                   \
       while (  _var < num_fields (SIZE)         \
@@ -99,18 +80,16 @@ namespace
       {                                         \
         ++_var;                                 \
       }
+
 #define SHOW()                                                  \
       if (w == 0)                                               \
       {                                                         \
-        std::cout << "* " << c++ << " " << _puts << std::endl;  \
-                                                                \
         if (won == player::other (_to_move))                    \
         {                                                       \
           std::cout << show<SIZE> (*this) << std::endl;         \
         }                                                       \
       }
 
-      int c (0);
       int const available_stones (_available_stones);
       int const high_water (_high_water);
 

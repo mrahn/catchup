@@ -6,6 +6,7 @@
 #include <board.cpp>
 
 #include <iostream>
+#include <limits>
 
 template<int SIZE>
 int winner (board::board<SIZE>* board)
@@ -73,7 +74,106 @@ int main3()
   return winner<3> (&board);
 }
 
+template<int SIZE>
+int main_full2()
+{
+  neighbourhood<SIZE> const neighbourhood;
+
+  board::board<SIZE> board (neighbourhood.neighbours);
+
+  player::player won [num_fields (SIZE)];
+  int lost[num_fields (SIZE)];
+  int lost_pos[2][num_fields (SIZE)];
+  int suc[num_fields (SIZE)];
+  unsigned long sum_puts (0);
+  unsigned long max_puts (0);
+  unsigned long min_puts (std::numeric_limits<unsigned long>::max());
+
+  std::fill (won, won + num_fields (SIZE), player::Blue);
+  std::fill (lost, lost + num_fields (SIZE), 0);
+  std::fill (lost_pos[0], lost_pos[0] + num_fields (SIZE), 0);
+  std::fill (lost_pos[1], lost_pos[1] + num_fields (SIZE), 0);
+  std::fill (suc, suc + num_fields (SIZE), 0);
+
+  for (int b (0); b < num_fields (SIZE); ++b)
+  {
+    board.put ({b});
+
+    for (int o1 (0); o1 < num_fields (SIZE) && won[b] == player::Blue; ++o1)
+    {
+      if (o1 != b)
+      {
+        for ( int o2 (o1 + 1)
+            ; o2 < num_fields (SIZE) && won[b] == player::Blue
+            ; ++o2
+            )
+        {
+          if (o2 != b)
+          {
+            board.put ({o1,o2});
+
+            if (board.is_normal())
+            {
+              std::cout << "* * * * " << b << " " << o1 << " " << o2 << std::endl;
+              std::cout << board::show<SIZE> (board) << std::endl;
+              board._puts = 0;
+              player::player const w (board.winner());
+              sum_puts += board._puts;
+              max_puts = std::max (max_puts, board._puts);
+              min_puts = std::min (min_puts, board._puts);
+              std::cout << player::show (w)
+                        << " puts " << board._puts
+                        << " min " << min_puts
+                        << " max " << max_puts
+                        << " sum " << sum_puts
+                        << std::endl;
+              if (w == player::Orange)
+              {
+                won[b] = player::Orange;
+                lost[b] = suc[b];
+                lost_pos[0][b] = o1;
+                lost_pos[1][b] = o2;
+              }
+              ++suc[b];
+            }
+
+            board.unput ({o1,o2}, 2, 1);
+          }
+        }
+      }
+    }
+
+    board.unput ({b}, 1, 0);
+  }
+
+  std::cout << "SUMMARY" << std::endl;
+
+  for (int b (0); b < num_fields (SIZE); ++b)
+  {
+    if (suc[b])
+    {
+      std::cout << b << ": " << player::show (won[b]);
+
+      if (won[b] == player::Orange)
+      {
+        std::cout << " " << lost[b]
+                  << " {" << lost_pos[0][b] << "," << lost_pos[1][b] << "}";
+      }
+
+      std::cout << std::endl;
+    }
+  }
+
+  std::cout << "puts:"
+            << " min " << min_puts
+            << " max " << max_puts
+            << " sum " << sum_puts
+            << std::endl;
+
+  return 0;
+}
+
 int main()
 {
-  return main_full<2>();
+  return main_full2<3>();
 }
