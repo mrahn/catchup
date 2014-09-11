@@ -65,21 +65,40 @@ namespace
     template<int SIZE>
     player::player board<SIZE>::winner (int w)
     {
+      player::player result (player::other (_to_move));
+      player::player minimum[num_fields (SIZE)];
+
 #define RETURN(_value)                                          \
-      std::cerr << _depth << " "                                \
-                << _available_stones << " "                     \
-                << _high_water << " "                           \
-                << player::show (_to_move) << " ";              \
                                                                 \
-      for (int field (0); field < num_fields (SIZE); ++field)   \
+      result = (_value == _to_move) ? _to_move : result;        \
+                                                                \
       {                                                         \
-        std::cerr << player::show (_stone[field]);              \
-      }                                                         \
+        std::cerr << is_normal (minimum) << " "                 \
+                  << _available_stones << " "                   \
+                  << player::show (_to_move) << " ";            \
                                                                 \
-      std::cerr << " " << player::show (_value) << std::endl;   \
+        for (int field (0); field < num_fields (SIZE); ++field) \
+        {                                                       \
+          std::cerr << player::show (_stone[field]);            \
+        }                                                       \
                                                                 \
-      return _value;
-#define FINAL_RETURN(_value) RETURN (_value);
+        std::cerr << " ";                                       \
+                                                                \
+        for (int field (0); field < num_fields (SIZE); ++field) \
+        {                                                       \
+          std::cerr << player::show (minimum[field]);           \
+        }                                                       \
+                                                                \
+        std::cerr << " " << player::show (_value) << std::endl; \
+      }
+
+#define FINAL_RETURN()                                                  \
+      RETURN ( ( result == _to_move ? result                            \
+               :  _available_stones ? result : in_front()               \
+               )                                                        \
+             );                                                         \
+                                                                        \
+      return result;
 
 #define NEXT_FREE_FIELD(_var)                   \
       while (  _var < num_fields (SIZE)         \
@@ -192,7 +211,7 @@ namespace
         }
       }
 
-      FINAL_RETURN (_available_stones ? player::other (_to_move) : in_front());
+      FINAL_RETURN();
 
 #undef SHOW
 #undef NEXT_FREE_FIELD
