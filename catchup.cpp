@@ -6,7 +6,6 @@
 #include <board.cpp>
 #include <neighbourhood.cpp>
 #include <player.cpp>
-#include <point.cpp>
 
 #include <iostream>
 

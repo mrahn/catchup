@@ -4,7 +4,6 @@
 
 #include <constant.hpp>
 #include <player.hpp>
-#include <point.hpp>
 #include <stream_modifier.hpp>
 
 #include <algorithm>
@@ -426,7 +425,6 @@ namespace
            << "\n";
 
         int line_x (0);
-        int k (0);
         std::size_t prefix (SIZE - 1);
         bool shrink (true);
 
@@ -443,20 +441,29 @@ namespace
 
         print_prefix();
 
-        for (point::point const& p : point::plane (SIZE))
+        int p (0);
+
+        for (int x (1 - SIZE); x < SIZE; ++x)
         {
-          int const x (point::x (p) + SIZE - 1);
-
-          if (x != line_x)
+          for (int y (1 - SIZE); y < SIZE; ++y)
           {
-            line_x = x;
-            os << "\n";
-            print_prefix();
+            for (int z (1 - SIZE); z < SIZE; ++z)
+            {
+              if (x + y + z == 0)
+              {
+                if (x + SIZE - 1 != line_x)
+                {
+                  line_x = x + SIZE - 1;
+                  os << "\n";
+                  print_prefix();
+                }
+
+                os << " " << player::show (_board._stone[p]);
+
+                ++p;
+              }
+            }
           }
-
-          os << " " << player::show (_board._stone[k]);
-
-          ++k;
         }
 
         return os << "\n";
