@@ -10,7 +10,7 @@ CXXFLAGS += $(addprefix -I , $(INCLUDEPATH))
 
 catchup.o: board.hpp board.cpp
 catchup.o: constant.hpp
-catchup.o: neighbourhood.hpp neighbourhood.cpp
+catchup.o: neighbourhood.hpp
 catchup.o: player.hpp player.cpp
 catchup.o: stream_modifier.hpp
 
