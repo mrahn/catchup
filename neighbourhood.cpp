@@ -6,7 +6,6 @@ namespace
 {
   template<int SIZE>
   neighbourhood<SIZE>::neighbourhood()
-    : _neighbours()
   {
     int k (num_fields (SIZE) + 1);
     int p (0);
@@ -19,7 +18,7 @@ namespace
         {
           if (px + py + pz == 0)
           {
-            _neighbours[p] = k;
+            neighbours[p] = k;
 
             int q (0);
 
@@ -37,7 +36,7 @@ namespace
                         ) == 2
                        )
                     {
-                      _neighbours[k++] = q;
+                      neighbours[k++] = q;
                     }
 
                     ++q;
@@ -52,11 +51,6 @@ namespace
       }
     }
 
-    _neighbours[p] = k;
-  }
-  template<int SIZE>
-  int const* neighbourhood<SIZE>::neighbours() const
-  {
-    return _neighbours;
+    neighbours[p] = k;
   }
 }

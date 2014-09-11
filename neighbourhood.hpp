@@ -8,13 +8,11 @@
 namespace
 {
   template<int SIZE>
-  class neighbourhood
+  struct neighbourhood
   {
-  public:
     neighbourhood();
-    int const* neighbours() const;
-  private:
-    int _neighbours[num_fields (SIZE) + 1 + num_neighbours (SIZE)];
+
+    int neighbours[num_fields (SIZE) + 1 + num_neighbours (SIZE)];
   };
 }
 

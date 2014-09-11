@@ -24,7 +24,7 @@ int main_lg1657870()
 {
   neighbourhood<5> const neighbourhood;
 
-  board::board<5> board (neighbourhood.neighbours());
+  board::board<5> board (neighbourhood.neighbours);
 
   board.put ({12});
   board.put ({16,37});
@@ -52,7 +52,7 @@ int main_full()
 {
   neighbourhood<SIZE> const neighbourhood;
 
-  board::board<SIZE> board (neighbourhood.neighbours());
+  board::board<SIZE> board (neighbourhood.neighbours);
 
   return winner<SIZE> (&board);
 }
@@ -61,7 +61,7 @@ int main3()
 {
   neighbourhood<3> const neighbourhood;
 
-  board::board<3> board (neighbourhood.neighbours());
+  board::board<3> board (neighbourhood.neighbours);
   board.put ({4});
   board.put ({5,8});
 
