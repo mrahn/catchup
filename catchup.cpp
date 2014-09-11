@@ -22,31 +22,28 @@ int winner (board::board<SIZE>* board)
   return 0;
 }
 
-int main_lg1657870()
+int lg (std::vector<std::vector<int>> const& moves)
 {
   neighbourhood<5> const neighbourhood;
 
   board::board<5> board (neighbourhood.neighbours);
 
-  board.put ({12});
-  board.put ({16,37});
-  board.put ({21,31});
-  board.put ({22,39});
-  board.put ({52,41});
-  board.put ({48,20});
-  board.put ({15,7});
-  board.put ({8,32});
-  board.put ({28,44});
-  board.put ({23,30});
-  board.put ({36,19,14});
-  board.put ({45,51});
-  board.put ({9,10});
-  board.put ({13,29});
-  board.put ({6,17,25});
-  board.put ({33,34,50});
-  board.put ({43,40,47});
+  for (std::vector<int> const& fields : moves)
+  {
+    board.put (fields);
+  }
 
   return winner<5> (&board);
+}
+
+int main_lg1657870()
+{
+  return lg ({{12},{16,37},{21,31},{22,39},{52,41},{48,20},{15,7},{8,32},{28,44},{23,30},{36,19,14},{45,51},{9,10},{13,29},{6,17,25},{33,34,50},{43,40,47},{53,54}});
+}
+
+int main_lg1657875()
+{
+  return lg ({{30},{22,37},{20,40},{39,13},{46,33},{31,38},{47,45,44},{32,41},{48,49,42},{36,43,50},{24,15,9},{14,8},{3,2,6},{23,16},{10,17,12},{7,1,51},{52,57,29},{19,18},{11,0},{53,58},{28,21},{27,56}});
 }
 
 template<int SIZE>
@@ -72,5 +69,5 @@ int main3()
 
 int main()
 {
-  return main3();
+  return main_lg1657870();
 }
