@@ -94,3 +94,22 @@ lg1657867 = [ ["C5"]
             , ["G2","H1","B5"]
             , ["B6","A6"]
             ];
+
+------------------------------------------------------------------------------
+
+prepend :: Int -> a -> [a] -> [a]
+prepend n x = reverse . take n . flip (++) (repeat x) . reverse
+
+hex :: Integral a => a -> String
+hex = (++) "0x" . prepend 16 '0' . reverse . hexr
+  where symbols = "0123456789ABCDEF"
+        hexr 0 = []
+        hexr v = let (q,r) = divMod v 16
+                 in (symbols !! fromIntegral r) : hexr q
+
+bin :: Integral a => a -> String
+bin = (++) "0b" . prepend 64 '0' . reverse . binr
+  where symbols = "01"
+        binr 0 = []
+        binr v = let (q,r) = divMod v 2
+                 in (symbols !! fromIntegral r) : binr q
