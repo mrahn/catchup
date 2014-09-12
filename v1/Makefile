@@ -1,5 +1,6 @@
 
 INCLUDEPATH += $(PWD)
+INCLUDEPATH += $(PWD)/../include
 
 CXXFLAGS += -std=c++11
 CXXFLAGS += -Wall
