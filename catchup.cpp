@@ -133,8 +133,8 @@ int main_full2()
         if (o1 != b)
         {
           for ( int o2 (o1 + 1)
-                  ; o2 < num_fields (SIZE) && won[b] == player::Blue
-                  ; ++o2
+              ; o2 < num_fields (SIZE) && won[b] == player::Blue
+              ; ++o2
               )
           {
             if (o2 != b)
