@@ -95,6 +95,33 @@ int main_full2()
   std::fill (lost_pos[1], lost_pos[1] + num_fields (SIZE), 0);
   std::fill (suc, suc + num_fields (SIZE), 0);
 
+  auto const calculate
+    ([&](int b, int o1, int o2)
+    {
+      std::cout << board::show<SIZE> (board) << std::endl;
+      board._puts = 0;
+      player::player const w (board.winner());
+      sum_puts += board._puts;
+      max_puts = std::max (max_puts, board._puts);
+      min_puts = std::min (min_puts, board._puts);
+      std::cout << "* * * * " << b << " " << o1 << " " << o2 << ":"
+                << " " << player::show (w)
+                << " puts " << board._puts
+                << " min " << min_puts
+                << " max " << max_puts
+                << " sum " << sum_puts
+                << std::endl;
+      if (w == player::Orange)
+      {
+        won[b] = player::Orange;
+        lost[b] = suc[b];
+        lost_pos[0][b] = o1;
+        lost_pos[1][b] = o2;
+      }
+      ++suc[b];
+    }
+    );
+
   for (int b (0); b < num_fields (SIZE); ++b)
   {
     board.put ({b});
@@ -114,30 +141,19 @@ int main_full2()
             {
               board.put ({o1,o2});
 
-              std::cout << board::show<SIZE> (board) << std::endl;
-              board._puts = 0;
-              player::player const w (board.winner());
-              sum_puts += board._puts;
-              max_puts = std::max (max_puts, board._puts);
-              min_puts = std::min (min_puts, board._puts);
-              std::cout << "* * * * " << b << " " << o1 << " " << o2 << ":"
-                        << " " << player::show (w)
-                        << " puts " << board._puts
-                        << " min " << min_puts
-                        << " max " << max_puts
-                        << " sum " << sum_puts
-                        << std::endl;
-              if (w == player::Orange)
-              {
-                won[b] = player::Orange;
-                lost[b] = suc[b];
-                lost_pos[0][b] = o1;
-                lost_pos[1][b] = o2;
-              }
-              ++suc[b];
+              calculate (b, o1, o2);
 
               board.unput ({o1,o2}, 2, 1);
             }
+          }
+
+          if (won[b] == player::Blue)
+          {
+            board.put ({o1});
+
+            calculate (b, o1, -1);
+
+            board.unput ({o1}, 2, 1);
           }
         }
       }
