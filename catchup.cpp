@@ -99,21 +99,21 @@ int main_full2()
   {
     board.put ({b});
 
-    for (int o1 (0); o1 < num_fields (SIZE) && won[b] == player::Blue; ++o1)
+    if (board.is_normal())
     {
-      if (o1 != b)
+      for (int o1 (0); o1 < num_fields (SIZE) && won[b] == player::Blue; ++o1)
       {
-        for ( int o2 (o1 + 1)
-            ; o2 < num_fields (SIZE) && won[b] == player::Blue
-            ; ++o2
-            )
+        if (o1 != b)
         {
-          if (o2 != b)
+          for ( int o2 (o1 + 1)
+                  ; o2 < num_fields (SIZE) && won[b] == player::Blue
+                  ; ++o2
+              )
           {
-            board.put ({o1,o2});
-
-            if (board.is_normal())
+            if (o2 != b)
             {
+              board.put ({o1,o2});
+
               std::cout << board::show<SIZE> (board) << std::endl;
               board._puts = 0;
               player::player const w (board.winner());
@@ -135,9 +135,9 @@ int main_full2()
                 lost_pos[1][b] = o2;
               }
               ++suc[b];
-            }
 
-            board.unput ({o1,o2}, 2, 1);
+              board.unput ({o1,o2}, 2, 1);
+            }
           }
         }
       }
