@@ -11,10 +11,10 @@ CXXFLAGS += $(addprefix -I , $(INCLUDEPATH))
 catchup.o: board.hpp board.cpp
 catchup.o: constant.hpp
 catchup.o: neighbourhood.hpp
-catchup.o: player.hpp
-catchup.o: stream_modifier.hpp
+catchup.o: $(PWD)/../include/player.hpp
+catchup.o: $(PWD)/../include/stream_modifier.hpp
 
-catchup.exe: catchup.o
+%.exe: %.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 %.run: %.exe
@@ -25,4 +25,4 @@ catchup.exe: catchup.o
 clean:
 	$(RM) *.o
 	$(RM) *.prof
-	$(RM) catchup.exe
+	$(RM) *.exe
