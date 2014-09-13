@@ -56,6 +56,9 @@ int main()
     }
   }
 
+  std::size_t const blues (won_by_blue.size());
+  std::size_t const oranges (won_by_orange.size());
+
   std::cout << board::show (board) << std::endl;
   std::cout << player::show (board.winner (&won_by_blue, &won_by_orange))
             << std::endl;
@@ -65,6 +68,7 @@ int main()
 
   std::cout << "writing cache..." << std::endl;
 
+  if (won_by_blue.size() > blues)
   {
     std::ofstream blue ("blue.dat");
 
@@ -74,6 +78,7 @@ int main()
     }
   }
 
+  if (won_by_orange.size() > oranges)
   {
     std::ofstream orange ("orange.dat");
 
