@@ -8,10 +8,22 @@ import qualified Put (put)
 
 import qualified HexPoint (id_of_point, mirror)
 
+import Data.List
+import Catchup
+import qualified Data.Set
+
 ------------------------------------------------------------------------------
 
 main :: IO ()
-main = print $ Catchup.result $ import_lg_game lg1657875
+-- main = print $ Catchup.result $ import_lg_game lg1657875
+main = let cs = map (onub . filter (\ c -> c == Catchup.normal c)) $ iterate (concatMap Catchup.all_suc)  [Catchup.catchup 3]
+       in mapM_ print $ map length cs
+
+onub = on Data.Set.empty
+       where on _ [] = []
+             on cache (x:xs)
+               | Data.Set.member x cache = on cache xs
+               | otherwise = x : on (Data.Set.insert x cache) xs
 
 ------------------------------------------------------------------------------
 
