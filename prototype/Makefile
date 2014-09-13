@@ -1,8 +1,8 @@
 
 MAIN = Main
 
-$(MAIN): $(wildcard *.hs) Makefile
-	ghc --make -O3 $(MAIN).hs
+%.exe: $(wildcard *.hs) Makefile
+	ghc --make -O3 $*.hs -o $*.exe
 
 .PHONY: clean
 
@@ -10,4 +10,4 @@ clean:
 	$(RM) *.o
 	$(RM) *.hi
 	$(RM) *.prof
-	$(RM) $(MAIN)
+	$(RM) *.exe
