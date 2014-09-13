@@ -65,13 +65,15 @@ namespace
     template<int SIZE>
     player::player board<SIZE>::winner (int w)
     {
-#define RETURN(_value)                          \
-      if (_value == _to_move)                   \
+#define FOUND_WINNING_MOVE()                    \
+      if (result != _to_move)                   \
       {                                         \
-        return _to_move;                        \
+        result = _to_move;                      \
+                                                \
+        return result;                          \
       }
-#define FINAL_RETURN()                                          \
-      return _available_stones ? other (_to_move) : in_front()
+#define FINAL_RETURN()                          \
+      return result;
 
 #define NEXT_FREE_FIELD(_var)                   \
       while (  _var < num_fields (SIZE)         \
@@ -88,6 +90,15 @@ namespace
         {                                                       \
           std::cout << show<SIZE> (*this) << std::endl;         \
         }                                                       \
+      }
+
+      player::player result (other (_to_move));
+
+      if (!_available_stones)
+      {
+        result = in_front();
+
+        FINAL_RETURN();
       }
 
       int const available_stones (_available_stones);
@@ -117,7 +128,7 @@ namespace
 
               if (won == _to_move)
               {
-                RETURN (_to_move);
+                FOUND_WINNING_MOVE();
               }
 
               ++h; NEXT_FREE_FIELD (h);
@@ -150,7 +161,7 @@ namespace
 
             if (won == _to_move)
             {
-              RETURN (_to_move);
+              FOUND_WINNING_MOVE();
             }
 
             ++g; NEXT_FREE_FIELD (g);
@@ -175,7 +186,7 @@ namespace
 
           if (won == _to_move)
           {
-            RETURN (_to_move);
+            FOUND_WINNING_MOVE();
           }
 
           ++f; NEXT_FREE_FIELD (f);
