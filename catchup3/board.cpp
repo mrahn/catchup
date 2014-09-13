@@ -76,8 +76,8 @@ namespace
         return player::Orange;
       }
 
-#define CACHE(_value)                                   \
-      if ((_value) == player::Blue)                     \
+#define STORE()                                         \
+      if (result == player::Blue)                       \
       {                                                 \
         won_by_blue->emplace (key);                     \
       }                                                 \
@@ -86,20 +86,20 @@ namespace
         won_by_orange->emplace (key);                   \
       }
 
-#define RETURN()                                \
-      CACHE (_to_move);                         \
+#define FOUND_WINNING_MOVE()                    \
+      if (result != _to_move)                   \
+      {                                         \
+        result = _to_move;                      \
                                                 \
-      return _to_move;
-
-#define FINAL_RETURN()                                          \
-      {                                                         \
-        player::player const result                             \
-          (_available_stones ? other (_to_move) : in_front());  \
-                                                                \
-        CACHE (result);                                         \
-                                                                \
-        return result;                                          \
+        STORE();                                \
+                                                \
+        return result;                          \
       }
+
+#define FINAL_RETURN()                          \
+      STORE();                                  \
+                                                \
+      return result;                            \
 
 #define NEXT_FREE_FIELD(_var)                   \
       while (  _var < 19                        \
@@ -116,6 +116,15 @@ namespace
         {                                                       \
           std::cout << show (*this) << std::endl;               \
         }                                                       \
+      }
+
+      player::player result (other (_to_move));
+
+      if (!_available_stones)
+      {
+        result = in_front();
+
+        FINAL_RETURN();
       }
 
       int const available_stones (_available_stones);
@@ -145,7 +154,7 @@ namespace
 
               if (won == _to_move)
               {
-                RETURN();
+                FOUND_WINNING_MOVE();
               }
 
               ++h; NEXT_FREE_FIELD (h);
@@ -178,7 +187,7 @@ namespace
 
             if (won == _to_move)
             {
-              RETURN();
+              FOUND_WINNING_MOVE();
             }
 
             ++g; NEXT_FREE_FIELD (g);
@@ -203,7 +212,7 @@ namespace
 
           if (won == _to_move)
           {
-            RETURN();
+            FOUND_WINNING_MOVE();
           }
 
           ++f; NEXT_FREE_FIELD (f);
