@@ -92,8 +92,6 @@ namespace
         result = _to_move;                      \
                                                 \
         STORE();                                \
-                                                \
-        return result;                          \
       }
 
 #define FINAL_RETURN()                          \
