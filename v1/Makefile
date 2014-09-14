@@ -9,11 +9,12 @@ CXXFLAGS += -O3
 
 CXXFLAGS += $(addprefix -I , $(INCLUDEPATH))
 
-catchup.o: board.hpp board.cpp
-catchup.o: constant.hpp
-catchup.o: neighbourhood.hpp
-catchup.o: $(PWD)/../include/player.hpp
-catchup.o: $(PWD)/../include/stream_modifier.hpp
+%.o: board.hpp board.cpp
+%.o: constant.hpp
+%.o: neighbourhood.hpp
+%.o: $(PWD)/../include/player.hpp
+%.o: $(PWD)/../include/stream_modifier.hpp
+%.o: $(PWD)/../include/hash.hpp
 
 %.exe: %.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
