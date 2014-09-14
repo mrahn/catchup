@@ -2,6 +2,7 @@
 
 #include <board.hpp>
 
+#include <neighbourhood.hpp>
 #include <constant.hpp>
 #include <player.hpp>
 #include <stream_modifier.hpp>
@@ -15,14 +16,13 @@ namespace
   namespace board
   {
     template<int SIZE>
-    board<SIZE>::board (int const* neighbours)
+    board<SIZE>::board()
       : _puts (0)
       , _depth (0)
       , _available_stones (std::min (num_fields (SIZE), 1))
       , _to_move (player::Blue)
       , _high_water (0)
       , _stone()
-      , _neighbours (neighbours)
     {
       std::fill (_stone, _stone + num_fields (SIZE), player::None);
     }
@@ -63,17 +63,47 @@ namespace
     }
 
     template<int SIZE>
-    player::player board<SIZE>::winner (int w)
+    player::player board<SIZE>::winner ( cache_type* won_by_blue
+                                       , cache_type* won_by_orange
+                                       , int w
+                                       )
     {
+      unsigned long const key (cache_key());
+
+      if (won_by_blue->has (key, *this))
+      {
+        return player::Blue;
+      }
+
+      if (won_by_orange->has (key, *this))
+      {
+        return player::Orange;
+      }
+
+#define STORE()                                         \
+      if (result == player::Blue)                       \
+      {                                                 \
+        won_by_blue->put (key, *this);                  \
+      }                                                 \
+      else                                              \
+      {                                                 \
+        won_by_orange->put (key, *this);                \
+      }
+
 #define FOUND_WINNING_MOVE()                    \
       if (result != _to_move)                   \
       {                                         \
         result = _to_move;                      \
                                                 \
+        STORE();                                \
+                                                \
         return result;                          \
       }
+
 #define FINAL_RETURN()                          \
-      return result;
+      STORE();                                  \
+                                                \
+      return result;                            \
 
 #define NEXT_FREE_FIELD(_var)                   \
       while (  _var < num_fields (SIZE)         \
@@ -120,7 +150,7 @@ namespace
             {
               put ({f, g, h});
 
-              player::player const won (winner (w + 1));
+              player::player const won (winner (won_by_blue, won_by_orange, w + 1));
 
               SHOW();
 
@@ -153,7 +183,7 @@ namespace
           {
             put ({f, g});
 
-            player::player const won (winner (w + 1));
+            player::player const won (winner (won_by_blue, won_by_orange, w + 1));
 
             SHOW();
 
@@ -178,7 +208,7 @@ namespace
         {
           put ({f});
 
-          player::player const won (winner (w + 1));
+          player::player const won (winner (won_by_blue, won_by_orange, w + 1));
 
           SHOW();
 
@@ -231,6 +261,63 @@ namespace
     }
 
     template<int SIZE>
+    void board<SIZE>::normal (player::player minimum[num_fields (SIZE)]) const
+    {
+      std::copy (_stone, _stone + num_fields (SIZE), minimum);
+
+      for (std::vector<int> const& translation : translations<SIZE>())
+      {
+        player::player translated[num_fields (SIZE)];
+
+        bool greater (false);
+        bool smaller (false);
+
+        for (int field (0); field < num_fields (SIZE) && !greater; ++field)
+        {
+          translated[field] = _stone[translation[field]];
+
+          smaller = smaller || translated[field] < minimum[field];
+          greater = !smaller && translated[field] > minimum[field];
+        }
+
+        if (smaller)
+        {
+          std::copy (translated, translated + num_fields (SIZE), minimum);
+        }
+      }
+    }
+
+    template<int SIZE>
+    unsigned long board<SIZE>::cache_key() const
+    {
+      player::player minimum[num_fields (SIZE)];
+
+      normal (minimum);
+
+      unsigned long key (0);
+      int bit (0);
+
+      key += _to_move; key <<= 1;
+      key += _available_stones; key <<= 2;
+
+      bit += 3;
+
+      for (int field (0); field < num_fields (SIZE); ++field, bit += 2)
+      {
+        if (bit >= 64)
+        {
+          key = hash_int (key);
+
+          bit -= 64;
+        }
+
+        key += minimum[field]; key <<= 2;
+      }
+
+      return key;
+    }
+
+    template<int SIZE>
     int board<SIZE>::max_sizes_of_components (std::vector<int> fields) const
     {
       int stack[num_fields (SIZE)];
@@ -255,13 +342,13 @@ namespace
           {
             int const f (stack[--top]);
 
-            for (int n (_neighbours[f]); n < _neighbours[f + 1]; ++n)
+            for (int n (N.neighbours[f]); n < N.neighbours[f + 1]; ++n)
             {
-              if (_stone[_neighbours[n]] == player && !seen[_neighbours[n]])
+              if (_stone[N.neighbours[n]] == player && !seen[N.neighbours[n]])
               {
-                stack[top++] = _neighbours[n];
+                stack[top++] = N.neighbours[n];
                 ++size;
-                seen[_neighbours[n]] = true;
+                seen[N.neighbours[n]] = true;
               }
             }
           }
@@ -303,15 +390,15 @@ namespace
           {
             int const f (stack[player][--top[player]]);
 
-            for (int n (_neighbours[f]); n < _neighbours[f + 1]; ++n)
+            for (int n (N.neighbours[f]); n < N.neighbours[f + 1]; ++n)
             {
-              if (  _stone[_neighbours[n]] == player
-                 && !seen[player][_neighbours[n]]
+              if (  _stone[N.neighbours[n]] == player
+                 && !seen[player][N.neighbours[n]]
                  )
               {
-                stack[player][top[player]++] = _neighbours[n];
+                stack[player][top[player]++] = N.neighbours[n];
                 ++size;
-                seen[player][_neighbours[n]] = true;
+                seen[player][N.neighbours[n]] = true;
               }
             }
           }
@@ -426,6 +513,20 @@ namespace
 
       return ts;
     }
+
+    namespace
+    {
+      template<int SIZE>
+      neighbourhood<SIZE> make_neighbourhood()
+      {
+        static neighbourhood<SIZE> neighbourhood;
+
+        return neighbourhood;
+      }
+    }
+
+    template<int SIZE>
+    neighbourhood<SIZE> board<SIZE>::N {make_neighbourhood<SIZE>()};
 
     template<int SIZE>
     class show : public stream_modifier<board<SIZE>>

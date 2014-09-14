@@ -1,7 +1,6 @@
 // mirko.rahn@web.de
 
 #include <board.hpp>
-#include <neighbourhood.hpp>
 
 #include <board.cpp>
 
@@ -13,7 +12,10 @@ int winner (board::board<SIZE>* board)
 {
   std::cout << board::show<SIZE> (*board) << std::endl;
 
-  std::cout << player::show (board->winner()) << std::endl;
+  typename board::board<SIZE>::cache_type won_by_blue (1UL << 30);
+  typename board::board<SIZE>::cache_type won_by_orange (1UL << 30);
+
+  std::cout << player::show (board->winner (&won_by_blue, &won_by_orange)) << std::endl;
   std::cout << "Put: " << board->_puts << std::endl;
 
   return 0;
@@ -21,9 +23,7 @@ int winner (board::board<SIZE>* board)
 
 int lg (std::vector<std::vector<int>> const& moves)
 {
-  neighbourhood<5> const neighbourhood;
-
-  board::board<5> board (neighbourhood.neighbours);
+  board::board<5> board;
 
   for (std::vector<int> const& fields : moves)
   {
@@ -61,18 +61,14 @@ int main_lg1657873()
 template<int SIZE>
 int main_full()
 {
-  neighbourhood<SIZE> const neighbourhood;
-
-  board::board<SIZE> board (neighbourhood.neighbours);
+  board::board<SIZE> board;
 
   return winner<SIZE> (&board);
 }
 
 int main3()
 {
-  neighbourhood<3> const neighbourhood;
-
-  board::board<3> board (neighbourhood.neighbours);
+  board::board<3> board;
   board.put ({4});
   board.put ({5,8});
 
@@ -82,9 +78,7 @@ int main3()
 template<int SIZE>
 int main_full2()
 {
-  neighbourhood<SIZE> const neighbourhood;
-
-  board::board<SIZE> board (neighbourhood.neighbours);
+  board::board<SIZE> board;
 
   player::player won [num_fields (SIZE)];
   int lost[num_fields (SIZE)];
@@ -100,12 +94,15 @@ int main_full2()
   std::fill (lost_pos[1], lost_pos[1] + num_fields (SIZE), 0);
   std::fill (suc, suc + num_fields (SIZE), 0);
 
+  typename board::board<SIZE>::cache_type won_by_blue (1UL << 28);
+  typename board::board<SIZE>::cache_type won_by_orange (1UL << 28);
+
   auto const calculate
     ([&](int b, int o1, int o2)
     {
       std::cout << board::show<SIZE> (board) << std::endl;
       board._puts = 0;
-      player::player const w (board.winner());
+      player::player const w (board.winner (&won_by_blue, &won_by_orange));
       sum_puts += board._puts;
       max_puts = std::max (max_puts, board._puts);
       min_puts = std::min (min_puts, board._puts);

@@ -4,6 +4,7 @@
 #define CATCHUP_NEIGHBOURHOOD_HPP
 
 #include <constant.hpp>
+#include <cstdlib>
 
 namespace
 {
