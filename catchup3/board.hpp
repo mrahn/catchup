@@ -3,14 +3,15 @@
 #ifndef CATCHUP3_BOARD_HPP
 #define CATCHUP3_BOARD_HPP
 
+#include <hash.hpp>
+
 #include <player.hpp>
 
-#include <unordered_set>
 #include <vector>
 
 namespace
 {
-  typedef std::unordered_set<unsigned long> cache_type;
+  typedef table<uint64_t, uint64_t, bucket<uint64_t, 1>, hash_int> cache_type;
 
   namespace board
   {

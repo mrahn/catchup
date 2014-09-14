@@ -66,12 +66,12 @@ namespace
     {
       unsigned long const key (cache_key());
 
-      if (won_by_blue->count (key))
+      if (won_by_blue->has (key, key))
       {
         return player::Blue;
       }
 
-      if (won_by_orange->count (key))
+      if (won_by_orange->has (key, key))
       {
         return player::Orange;
       }
@@ -79,11 +79,11 @@ namespace
 #define STORE()                                         \
       if (result == player::Blue)                       \
       {                                                 \
-        won_by_blue->emplace (key);                     \
+        won_by_blue->put (key, key);                    \
       }                                                 \
       else                                              \
       {                                                 \
-        won_by_orange->emplace (key);                   \
+        won_by_orange->put (key, key);                  \
       }
 
 #define FOUND_WINNING_MOVE()                    \
@@ -92,6 +92,8 @@ namespace
         result = _to_move;                      \
                                                 \
         STORE();                                \
+                                                \
+        return result;                          \
       }
 
 #define FINAL_RETURN()                          \

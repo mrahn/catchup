@@ -24,69 +24,16 @@ int main()
                         };
 
   board::board board (neighbours, translations);
+  board.put({4});
+  board.put({5,8});
 
-  cache_type won_by_blue;
-  cache_type won_by_orange;
-
-  std::cout << "reading cache..." << std::endl;
-
-  {
-    std::ifstream blue ("blue.dat");
-
-    while (blue)
-    {
-      unsigned long v;
-
-      blue >> v;
-
-      won_by_blue.emplace (v);
-    }
-  }
-
-  {
-    std::ifstream orange ("orange.dat");
-
-    while (orange)
-    {
-      unsigned long v;
-
-      orange >> v;
-
-      won_by_orange.emplace (v);
-    }
-  }
-
-  std::size_t const blues (won_by_blue.size());
-  std::size_t const oranges (won_by_orange.size());
+  cache_type won_by_blue ((1UL << 28));
+  cache_type won_by_orange ((1UL << 28));
 
   std::cout << board::show (board) << std::endl;
   std::cout << player::show (board.winner (&won_by_blue, &won_by_orange))
             << std::endl;
   std::cout << "Put: " << board._puts << std::endl;
-  std::cout << "Won_by_blue: " << won_by_blue.size() << std::endl;
-  std::cout << "Won_by_orange: " << won_by_orange.size() << std::endl;
-
-  std::cout << "writing cache..." << std::endl;
-
-  if (won_by_blue.size() > blues)
-  {
-    std::ofstream blue ("blue.dat");
-
-    for (unsigned long i : won_by_blue)
-    {
-      blue << i << std::endl;
-    }
-  }
-
-  if (won_by_orange.size() > oranges)
-  {
-    std::ofstream orange ("orange.dat");
-
-    for (unsigned long i : won_by_orange)
-    {
-      orange << i << std::endl;
-    }
-  }
 
   return 0;
 }
