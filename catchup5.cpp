@@ -49,6 +49,8 @@ namespace
       : _to_move (player::blue())
       , _taken()
       , _high_water (0)
+      , _free_fields (61)
+      , _available_stones (1)
       , _seen()
     {
       std::fill (_taken[player::blue()], _taken[player::blue()] + 61, false);
@@ -60,9 +62,9 @@ namespace
     void put (int, int, int);
 
   private:
-    void unput (int, int high_water);
-    void unput (int, int, int high_water);
-    void unput (int, int, int, int high_water);
+    void unput (int, int high_water, int available_stones);
+    void unput (int, int, int high_water, int available_stones);
+    void unput (int, int, int, int high_water, int available_stones);
 
     friend class show;
 
@@ -73,6 +75,8 @@ namespace
     player::player _to_move;
     bool _taken[2][61];
     int _high_water;
+    int _free_fields;
+    int _available_stones;
 
     bool _seen[61];
     int size_of_component (int f, player::player);
@@ -88,6 +92,8 @@ namespace
     {
       os << "to_move " << player::show (_board._to_move)
          << " high_water " << _board._high_water
+         << " available_stones " << _board._available_stones
+         << " free_fields " << _board._free_fields
          << '\n';
 
       auto const line
@@ -127,9 +133,15 @@ namespace
   void board::put (int f)
   {
     _taken[_to_move][f] = true;
+    _free_fields -= 1;
+
+    const int high_water_old (_high_water);
 
     std::fill (_seen, _seen + 61, false);
     _high_water = std::max (_high_water, size_of_component (f, _to_move));
+
+    _available_stones =
+      (_high_water > high_water_old && _high_water > 1) ? 3 : 2;
 
     _to_move = player::other (_to_move);
   }
@@ -137,10 +149,16 @@ namespace
   {
     _taken[_to_move][f] = true;
     _taken[_to_move][g] = true;
+    _free_fields -= 2;
+
+    const int high_water_old (_high_water);
 
     std::fill (_seen, _seen + 61, false);
     _high_water = std::max (_high_water, size_of_component (f, _to_move));
     _high_water = std::max (_high_water, size_of_component (g, _to_move));
+
+    _available_stones =
+      (_high_water > high_water_old && _high_water > 1) ? 3 : 2;
 
     _to_move = player::other (_to_move);
   }
@@ -149,38 +167,50 @@ namespace
     _taken[_to_move][f] = true;
     _taken[_to_move][g] = true;
     _taken[_to_move][h] = true;
+    _free_fields -= 3;
+
+    const int high_water_old (_high_water);
 
     std::fill (_seen, _seen + 61, false);
     _high_water = std::max (_high_water, size_of_component (f, _to_move));
     _high_water = std::max (_high_water, size_of_component (g, _to_move));
     _high_water = std::max (_high_water, size_of_component (h, _to_move));
 
+    _available_stones =
+      (_high_water > high_water_old && _high_water > 1) ? 3 : 2;
+
     _to_move = player::other (_to_move);
   }
 
-  void board::unput (int f, int high_water)
+  void board::unput (int f, int high_water, int available_stones)
   {
     _to_move = player::other (_to_move);
 
     _high_water = high_water;
+    _available_stones = available_stones;
 
+    _free_fields += 1;
     _taken[_to_move][f] = false;
   }
-  void board::unput (int f, int g, int high_water)
+  void board::unput (int f, int g, int high_water, int available_stones)
   {
     _to_move = player::other (_to_move);
 
     _high_water = high_water;
+    _available_stones = available_stones;
 
+    _free_fields += 2;
     _taken[_to_move][f] = false;
     _taken[_to_move][g] = false;
   }
-  void board::unput (int f, int g, int h, int high_water)
+  void board::unput (int f, int g, int h, int high_water, int available_stones)
   {
     _to_move = player::other (_to_move);
 
     _high_water = high_water;
+    _available_stones = available_stones;
 
+    _free_fields += 3;
     _taken[_to_move][f] = false;
     _taken[_to_move][g] = false;
     _taken[_to_move][h] = false;
