@@ -62,7 +62,7 @@ namespace
     void put (int, int);
     void put (int, int, int);
 
-    uint64_t size_of_tree();
+    std::pair<uint64_t, player::player> size_of_tree_for_winning_move();
 
   private:
     void unput (int, int high_water, int available_stones);
@@ -83,6 +83,8 @@ namespace
 
     bool _seen[61];
     int size_of_component (int f, player::player);
+
+    player::player in_front();
   };
 
   class show
@@ -267,13 +269,25 @@ namespace
     return size;
   }
 
-  uint64_t board::size_of_tree()
+#define CHILD()                                   \
+  std::pair<uint64_t, player::player> const child \
+    (size_of_tree_for_winning_move());            \
+                                                  \
+  size += child.first
+
+#define RETURN_ON_WINNING_MOVE()                \
+  if (child.second == _to_move)                 \
+  {                                             \
+    return {size,_to_move};                     \
+  }
+
+  std::pair<uint64_t, player::player> board::size_of_tree_for_winning_move()
   {
     uint64_t size (1);
 
     if (_free_fields == 0)
     {
-      return size;
+      return {size, in_front()};
     }
 
     const int available_stones (_available_stones);
@@ -294,8 +308,9 @@ namespace
                 if (!_taken[player::blue()][h] && !_taken[player::orange()][h])
                 {
                   put (f, g, h);
-                  size += size_of_tree();
+                  CHILD();
                   unput (f, g, h, high_water, available_stones);
+                  RETURN_ON_WINNING_MOVE();
                 }
               }
             }
@@ -315,8 +330,9 @@ namespace
             if (!_taken[player::blue()][g] && !_taken[player::orange()][g])
             {
               put (f, g);
-              size += size_of_tree();
+              CHILD();
               unput (f, g, high_water, available_stones);
+              RETURN_ON_WINNING_MOVE();
             }
           }
         }
@@ -330,13 +346,75 @@ namespace
         if (!_taken[player::blue()][f] && !_taken[player::orange()][f])
         {
           put (f);
-          size += size_of_tree();
+          CHILD();
           unput (f, high_water, available_stones);
+          RETURN_ON_WINNING_MOVE();
         }
       }
     }
 
-    return size;
+    return {size, player::other (_to_move)};
+  };
+
+#undef RETURN_ON_WINNING_MOVE
+#undef CHILD
+
+  player::player board::in_front()
+  {
+    int size[2][61];
+    int top[2] = {0,0};
+
+    std::fill (_seen, _seen + 61, false);
+
+    for (player::player player : {player::blue(), player::orange()})
+    {
+      for (int field (0); field < 61; ++field)
+      {
+        if (!_seen[field] && _taken[player][field])
+        {
+          size[player][top[player]++] = size_of_component (field, player);
+        }
+      }
+
+      std::sort (size[player], size[player] + top[player], std::greater<int>());
+    }
+
+    int pos[2] = {0,0};
+
+#define VALID(player) (pos[player] != top[player])
+#define SIZE(player) size[player][pos[player]]
+#define INC(player) ++pos[player]
+
+    while (  VALID (player::blue())
+          && VALID (player::orange())
+          && (SIZE (player::blue()) == SIZE (player::orange()))
+          )
+    {
+      INC (player::blue());
+      INC (player::orange());
+    }
+
+    if (VALID (player::blue()) && VALID (player::orange()))
+    {
+      return (SIZE (player::blue()) > SIZE (player::orange()))
+        ? player::blue() : player::orange();
+    }
+
+    if (VALID (player::blue()))
+    {
+      return player::blue();
+    }
+
+    if (VALID (player::orange()))
+    {
+      return player::orange();
+    }
+
+#undef INC
+#undef SIZE
+#undef VALID
+
+    abort();
   };
 }
 
@@ -365,15 +443,19 @@ int main()
   b.put (51,57,58);
   b.put (4,27,35);
   b.put (43,24,25);
-  b.put (0,1);
-  b.put (2,59,34);
+  // b.put (0,1);
+  // b.put (2,59,34);
   // b.put (18,11);
   // b.put (42,55,60);
-  //  b.put (26,50,56);
+  // b.put (26,50,56);
 
   std::cout << show (b) << std::endl;
 
-  std::cout << "size_of_tree: " << b.size_of_tree() << std::endl;
+  std::pair<uint64_t, player::player> const winner
+    (b.size_of_tree_for_winning_move());
+
+  std::cout << "winner: " << player::show (winner.second) << std::endl;
+  std::cout << "size_of_tree_for_winning_move: " << winner.first << std::endl;
 
   return 0;
 }
