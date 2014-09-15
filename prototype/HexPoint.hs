@@ -74,3 +74,13 @@ rorrim 2 (HexPoint y x z) = HexPoint x y z
 rorrim 3 (HexPoint y z x) = HexPoint x y z
 rorrim 4 (HexPoint z x y) = HexPoint x y z
 rorrim 5 (HexPoint z y x) = HexPoint x y z
+
+transformations :: Int -> [[Int]]
+transformations s =
+  let n = num_points s
+      apply t = map (id_of_point s . t) (points s)
+  in map apply [ mirror k | k <- [0..5] ]
+     ++ map apply [ mirror k . rotate60 | k <- [0..5] ]
+
+trans_c :: Int -> [Int]
+trans_c = concat . tail . transformations
