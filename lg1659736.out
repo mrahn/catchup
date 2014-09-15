@@ -1,0 +1,18 @@
+to_move O, high_water 16, stones 2
+     O O . B .
+    O B O O B .
+   . O B B O B .
+  . B O . B O . .
+ . O B O O B O O O
+  . B O B B B B B
+   . B B . . O .
+    . . B O O .
+     . . . . .
+
+cache: size 1073741824 capacity 1917396
+cache: size 1073741824 capacity 1917396
+B
+Put: 4156979850
+cache: put 17596599 hit 38444780 miss 687306215
+cache: put 669709616 hit 3431228839 miss 725750995
+catchup.exe: 4349.32 sec(s)
