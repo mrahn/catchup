@@ -87,6 +87,10 @@ namespace
     player::player in_front();
   };
 
+#define UNSEE_ALL() std::fill (_seen, _seen + 61, false);
+#define SEEN(field) _seen[field]
+#define SEE(field) _seen[field] = true
+
   class show
   {
   public:
@@ -142,7 +146,7 @@ namespace
 #define INIT_TRAVERSALS()                       \
   const int high_water_old (_high_water);       \
                                                 \
-  std::fill (_seen, _seen + 61, false)
+  UNSEE_ALL()
 
 #define TRAVERSE(f)                                                     \
   _high_water = std::max (_high_water, size_of_component (f, _to_move))
@@ -242,10 +246,10 @@ namespace
     int pos (0);
     int size (0);
 
-    if (!_seen[field])
+    if (!SEEN (field))
     {
       stack[pos++] = field;
-      _seen[field] = true;
+      SEE (field);
       ++size;
     }
 
@@ -257,10 +261,10 @@ namespace
       {
         int const n (neighbour[npos]);
 
-        if (!_seen[n] && _taken[player][n])
+        if (!SEEN (n) && _taken[player][n])
         {
           stack[pos++] = n;
-          _seen[n] = true;
+          SEE (n);
           ++size;
         }
       }
@@ -364,13 +368,13 @@ namespace
     int size[2][61];
     int top[2] = {0,0};
 
-    std::fill (_seen, _seen + 61, false);
+    UNSEE_ALL();
 
     for (player::player player : {player::blue(), player::orange()})
     {
       for (int field (0); field < 61; ++field)
       {
-        if (!_seen[field] && _taken[player][field])
+        if (!SEEN (field) && _taken[player][field])
         {
           size[player][top[player]++] = size_of_component (field, player);
         }
@@ -416,6 +420,10 @@ namespace
 
     abort();
   };
+
+#undef SEE
+#undef SEEN
+#undef UNSEE_ALL
 }
 
 int main()
