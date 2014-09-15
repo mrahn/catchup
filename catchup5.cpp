@@ -133,91 +133,106 @@ namespace
     return s (os);
   }
 
+#define SWITCH_PLAYER() _to_move = player::other (_to_move)
+
+#define TAKE(f) _taken[_to_move][f] = true; --_free_fields
+
+#define INIT_TRAVERSALS()                       \
+  const int high_water_old (_high_water);       \
+                                                \
+  std::fill (_seen, _seen + 61, false)
+
+#define TRAVERSE(f)                                                     \
+  _high_water = std::max (_high_water, size_of_component (f, _to_move))
+
+#define FINALIZE_TRAVERSALS()                                           \
+  _available_stones =                                                   \
+    (_high_water > high_water_old && _high_water > 1) ? 3 : 2
+
   void board::put (int f)
   {
-    _taken[_to_move][f] = true;
-    _free_fields -= 1;
+    TAKE (f);
 
-    const int high_water_old (_high_water);
+    INIT_TRAVERSALS();
 
-    std::fill (_seen, _seen + 61, false);
-    _high_water = std::max (_high_water, size_of_component (f, _to_move));
+    TRAVERSE (f);
 
-    _available_stones =
-      (_high_water > high_water_old && _high_water > 1) ? 3 : 2;
+    FINALIZE_TRAVERSALS();
 
-    _to_move = player::other (_to_move);
+    SWITCH_PLAYER();
   }
   void board::put (int f, int g)
   {
-    _taken[_to_move][f] = true;
-    _taken[_to_move][g] = true;
-    _free_fields -= 2;
+    TAKE (f);
+    TAKE (g);
 
-    const int high_water_old (_high_water);
+    INIT_TRAVERSALS();
 
-    std::fill (_seen, _seen + 61, false);
-    _high_water = std::max (_high_water, size_of_component (f, _to_move));
-    _high_water = std::max (_high_water, size_of_component (g, _to_move));
+    TRAVERSE (f);
+    TRAVERSE (g);
 
-    _available_stones =
-      (_high_water > high_water_old && _high_water > 1) ? 3 : 2;
+    FINALIZE_TRAVERSALS();
 
-    _to_move = player::other (_to_move);
+    SWITCH_PLAYER();
   }
   void board::put (int f, int g, int h)
   {
-    _taken[_to_move][f] = true;
-    _taken[_to_move][g] = true;
-    _taken[_to_move][h] = true;
-    _free_fields -= 3;
+    TAKE (f);
+    TAKE (g);
+    TAKE (h);
 
-    const int high_water_old (_high_water);
+    INIT_TRAVERSALS();
 
-    std::fill (_seen, _seen + 61, false);
-    _high_water = std::max (_high_water, size_of_component (f, _to_move));
-    _high_water = std::max (_high_water, size_of_component (g, _to_move));
-    _high_water = std::max (_high_water, size_of_component (h, _to_move));
+    TRAVERSE (f);
+    TRAVERSE (g);
+    TRAVERSE (h);
 
-    _available_stones =
-      (_high_water > high_water_old && _high_water > 1) ? 3 : 2;
+    FINALIZE_TRAVERSALS();
 
-    _to_move = player::other (_to_move);
+    SWITCH_PLAYER();
   }
+
+#undef FINALIZE_TRAVERSALS
+#undef TRAVERSE
+#undef INIT_TRAVERSALS
+#undef TAKE
+
+#define UNTAKE(f) _taken[_to_move][f] = false; ++_free_fields
 
   void board::unput (int f, int high_water, int available_stones)
   {
-    _to_move = player::other (_to_move);
+    SWITCH_PLAYER();
 
     _high_water = high_water;
     _available_stones = available_stones;
 
-    _free_fields += 1;
-    _taken[_to_move][f] = false;
+    UNTAKE (f);
   }
   void board::unput (int f, int g, int high_water, int available_stones)
   {
-    _to_move = player::other (_to_move);
+    SWITCH_PLAYER();
 
     _high_water = high_water;
     _available_stones = available_stones;
 
-    _free_fields += 2;
-    _taken[_to_move][f] = false;
-    _taken[_to_move][g] = false;
+    UNTAKE (f);
+    UNTAKE (g);
   }
   void board::unput (int f, int g, int h, int high_water, int available_stones)
   {
-    _to_move = player::other (_to_move);
+    SWITCH_PLAYER();
 
     _high_water = high_water;
     _available_stones = available_stones;
 
-    _free_fields += 3;
-    _taken[_to_move][f] = false;
-    _taken[_to_move][g] = false;
-    _taken[_to_move][h] = false;
+    UNTAKE (f);
+    UNTAKE (g);
+    UNTAKE (h);
   }
+
+#undef UNTAKE
+
+#undef SWITCH_PLAYER
 
   int board::size_of_component (int field, player::player player)
   {
