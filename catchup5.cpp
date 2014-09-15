@@ -1,6 +1,7 @@
 // mirko.jesiak@web.de
 
 #include <algorithm>
+#include <cstdint>
 #include <iostream>
 
 namespace
@@ -60,6 +61,8 @@ namespace
     void put (int);
     void put (int, int);
     void put (int, int, int);
+
+    uint64_t size_of_tree();
 
   private:
     void unput (int, int high_water, int available_stones);
@@ -248,16 +251,114 @@ namespace
 
     return size;
   }
+
+  uint64_t board::size_of_tree()
+  {
+    uint64_t size (1);
+
+    if (_free_fields == 0)
+    {
+      return size;
+    }
+
+    const int available_stones (_available_stones);
+    const int high_water (_high_water);
+
+    if (_available_stones > 2)
+    {
+      for (int f (0); f < 61 - 2; ++f)
+      {
+        if (!_taken[player::blue()][f] && !_taken[player::orange()][f])
+        {
+          for (int g (f + 1); g < 61 - 1; ++g)
+          {
+            if (!_taken[player::blue()][g] && !_taken[player::orange()][g])
+            {
+              for (int h (g + 1); h < 61; ++h)
+              {
+                if (!_taken[player::blue()][h] && !_taken[player::orange()][h])
+                {
+                  put (f, g, h);
+                  size += size_of_tree();
+                  unput (f, g, h, high_water, available_stones);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (_available_stones > 1)
+    {
+      for (int f (0); f < 61 - 1; ++f)
+      {
+        if (!_taken[player::blue()][f] && !_taken[player::orange()][f])
+        {
+          for (int g (f + 1); g < 61; ++g)
+          {
+            if (!_taken[player::blue()][g] && !_taken[player::orange()][g])
+            {
+              put (f, g);
+              size += size_of_tree();
+              unput (f, g, high_water, available_stones);
+            }
+          }
+        }
+      }
+    }
+
+    if (_available_stones > 0)
+    {
+      for (int f (0); f < 61; ++f)
+      {
+        if (!_taken[player::blue()][f] && !_taken[player::orange()][f])
+        {
+          put (f);
+          size += size_of_tree();
+          unput (f, high_water, available_stones);
+        }
+      }
+    }
+
+    return size;
+  };
 }
 
 int main()
 {
   board b;
-  b.put (0);
-  b.put (1, 2);
-  b.put (3, 4, 5);
+  // lg1657873
+  b.put (23);
+  b.put (31,47);
+  b.put (30,46);
+  b.put (38,21);
+  b.put (14,20);
+  b.put (28,15);
+  b.put (29,39);
+  b.put (40,22,13);
+  b.put (53,54,7);
+  b.put (10,5);
+  b.put (36,49);
+  b.put (37,33);
+  b.put (44,6);
+  b.put (12,19);
+  b.put (32,41,48);
+  b.put (52,17);
+  b.put (16,9);
+  b.put (8,3,45);
+  b.put (51,57,58);
+  b.put (4,27,35);
+  b.put (43,24,25);
+  b.put (0,1);
+  b.put (2,59,34);
+  // b.put (18,11);
+  // b.put (42,55,60);
+  //  b.put (26,50,56);
 
   std::cout << show (b) << std::endl;
+
+  std::cout << "size_of_tree: " << b.size_of_tree() << std::endl;
 
   return 0;
 }
