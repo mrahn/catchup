@@ -94,6 +94,8 @@ namespace
 
 #define TAKE(f) _taken[_to_move][f] = true; --_free_fields
 #define UNTAKE(f) _taken[_to_move][f] = false; ++_free_fields
+#define IS_TAKEN(p, f) _taken[p][f]
+#define IS_FREE(f) !IS_TAKEN (player::blue(), f) && !IS_TAKEN (player::orange(), f)
 
   class show
   {
@@ -264,7 +266,7 @@ namespace
       {
         int const n (neighbour[npos]);
 
-        if (!SEEN (n) && _taken[player][n])
+        if (!SEEN (n) && IS_TAKEN (player, n))
         {
           stack[pos++] = n;
           SEE (n);
@@ -311,15 +313,15 @@ namespace
     {
       for (int f (0); f < 61 - 2; ++f)
       {
-        if (!_taken[player::blue()][f] && !_taken[player::orange()][f])
+        if (IS_FREE (f))
         {
           for (int g (f + 1); g < 61 - 1; ++g)
           {
-            if (!_taken[player::blue()][g] && !_taken[player::orange()][g])
+            if (IS_FREE (g))
             {
               for (int h (g + 1); h < 61; ++h)
               {
-                if (!_taken[player::blue()][h] && !_taken[player::orange()][h])
+                if (IS_FREE (h))
                 {
                   put (f, g, h);
                   CHILD();
@@ -337,11 +339,11 @@ namespace
     {
       for (int f (0); f < 61 - 1; ++f)
       {
-        if (!_taken[player::blue()][f] && !_taken[player::orange()][f])
+        if (IS_FREE (f))
         {
           for (int g (f + 1); g < 61; ++g)
           {
-            if (!_taken[player::blue()][g] && !_taken[player::orange()][g])
+            if (IS_FREE (g))
             {
               put (f, g);
               CHILD();
@@ -357,7 +359,7 @@ namespace
     {
       for (int f (0); f < 61; ++f)
       {
-        if (!_taken[player::blue()][f] && !_taken[player::orange()][f])
+        if (IS_FREE (f))
         {
           put (f);
           CHILD();
@@ -384,7 +386,7 @@ namespace
     {
       for (int field (0); field < 61; ++field)
       {
-        if (!SEEN (field) && _taken[player][field])
+        if (!SEEN (field) && IS_TAKEN (player, field))
         {
           size[player][top[player]++] = size_of_component (field, player);
         }
@@ -431,6 +433,8 @@ namespace
     abort();
   };
 
+#undef IS_FREE
+#undef IS_TAKEN
 #undef UNTAKE
 #undef TAKE
 
