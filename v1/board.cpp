@@ -295,12 +295,11 @@ namespace
       normal (minimum);
 
       unsigned long key (0);
-      int bit (0);
 
       key += _to_move; key <<= 1;
       key += _available_stones; key <<= 2;
 
-      bit += 3;
+      int bit (3);
 
       for (int field (0); field < num_fields (SIZE); ++field, bit += 2)
       {
@@ -308,7 +307,7 @@ namespace
         {
           key = hash_int (key);
 
-          bit -= 64;
+          bit = 0;
         }
 
         key += minimum[field]; key <<= 2;
