@@ -286,7 +286,7 @@ namespace
                                                                 \
   if (d == 0 && child.second == player::other (_to_move))       \
   {                                                             \
-    std::cout << show (*this) << std::endl;                     \
+    std::cout << show (*this) << '\n';                          \
   }
 
 #define RETURN_ON_WINNING_MOVE()                \
@@ -480,13 +480,13 @@ int main()
   // b.put (42,55,60);
   // b.put (26,50,56);
 
-  std::cout << show (b) << std::endl;
+  std::cout << show (b) << '\n';
 
   std::pair<uint64_t, player::player> const winner
     (b.size_of_tree_for_winning_move());
 
-  std::cout << "winner: " << player::show (winner.second) << std::endl;
-  std::cout << "size_of_tree_for_winning_move: " << winner.first << std::endl;
+  std::cout << "winner: " << player::show (winner.second) << '\n';
+  std::cout << "size_of_tree_for_winning_move: " << winner.first << '\n';
 
   return 0;
 }
