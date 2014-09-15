@@ -48,6 +48,8 @@ namespace
     board()
       : _to_move (player::blue())
       , _taken()
+      , _high_water (0)
+      , _seen()
     {
       std::fill (_taken[player::blue()], _taken[player::blue()] + 61, false);
       std::fill (_taken[player::orange()], _taken[player::orange()] + 61, false);
@@ -70,6 +72,10 @@ namespace
 
     player::player _to_move;
     bool _taken[2][61];
+    int _high_water;
+
+    bool _seen[61];
+    int size_of_component (int f, player::player);
   };
 
   class show
@@ -81,7 +87,8 @@ namespace
     std::ostream& operator() (std::ostream& os) const
     {
       os << "to_move " << player::show (_board._to_move)
-         << "\n";
+         << " high_water " << _board._high_water
+         << '\n';
 
       auto const line
         ( [this, &os] (int begin, int end)
@@ -121,12 +128,19 @@ namespace
   {
     _taken[_to_move][f] = true;
 
+    std::fill (_seen, _seen + 61, false);
+    _high_water = std::max (_high_water, size_of_component (f, _to_move));
+
     _to_move = player::other (_to_move);
   }
   void board::put (int f, int g)
   {
     _taken[_to_move][f] = true;
     _taken[_to_move][g] = true;
+
+    std::fill (_seen, _seen + 61, false);
+    _high_water = std::max (_high_water, size_of_component (f, _to_move));
+    _high_water = std::max (_high_water, size_of_component (g, _to_move));
 
     _to_move = player::other (_to_move);
   }
@@ -136,29 +150,73 @@ namespace
     _taken[_to_move][g] = true;
     _taken[_to_move][h] = true;
 
+    std::fill (_seen, _seen + 61, false);
+    _high_water = std::max (_high_water, size_of_component (f, _to_move));
+    _high_water = std::max (_high_water, size_of_component (g, _to_move));
+    _high_water = std::max (_high_water, size_of_component (h, _to_move));
+
     _to_move = player::other (_to_move);
   }
 
-  void board::unput (int f)
+  void board::unput (int f, int high_water)
   {
     _to_move = player::other (_to_move);
+
+    _high_water = high_water;
 
     _taken[_to_move][f] = false;
   }
-  void board::unput (int f, int g)
+  void board::unput (int f, int g, int high_water)
   {
     _to_move = player::other (_to_move);
+
+    _high_water = high_water;
 
     _taken[_to_move][f] = false;
     _taken[_to_move][g] = false;
   }
-  void board::unput (int f, int g, int h)
+  void board::unput (int f, int g, int h, int high_water)
   {
     _to_move = player::other (_to_move);
+
+    _high_water = high_water;
 
     _taken[_to_move][f] = false;
     _taken[_to_move][g] = false;
     _taken[_to_move][h] = false;
+  }
+
+  int board::size_of_component (int field, player::player player)
+  {
+    int stack[61];
+    int pos (0);
+    int size (0);
+
+    if (!_seen[field])
+    {
+      stack[pos++] = field;
+      _seen[field] = true;
+      ++size;
+    }
+
+    while (pos)
+    {
+      int const f (stack[--pos]);
+
+      for (int npos (neighbour_begin[f]); npos < neighbour_begin[f + 1]; ++npos)
+      {
+        int const n (neighbour[npos]);
+
+        if (!_seen[n] && _taken[player][n])
+        {
+          stack[pos++] = n;
+          _seen[n] = true;
+          ++size;
+        }
+      }
+    }
+
+    return size;
   }
 }
 
