@@ -10,10 +10,9 @@ namespace
   {
     typedef int player;
 
-    constexpr player other (player p) { return 1 - p; }
-    constexpr player blue() { return 0; }
-    constexpr player orange() { return other (blue()); }
-    constexpr player none() { return 2; }
+#define BLUE 0
+#define ORANGE 1
+#define NONE 2
 
     class show
     {
@@ -23,8 +22,7 @@ namespace
       {}
       std::ostream& operator() (std::ostream& os) const
       {
-        return os <<
-          (_player == blue() ? 'B' : _player == orange() ? 'O' : '.');
+        return os << (_player == BLUE ? 'B' : _player == ORANGE ? 'O' : '.');
       }
     private:
       player _player;
@@ -46,14 +44,14 @@ namespace
     board operator= (board&&) = delete;
 
     board()
-      : _to_move (player::blue())
+      : _to_move (BLUE)
       , _taken()
       , _high_water()
       , _free_fields (61)
       , _available_stones (1)
       , _seen()
     {
-      std::fill (_taken, _taken + 61, player::none());
+      std::fill (_taken, _taken + 61, NONE);
       std::fill (_high_water, _high_water + 2, 0);
     };
 
@@ -96,9 +94,9 @@ namespace
 #define SEE(field) _seen[field] = true
 
 #define TAKE(f) _taken[f] = _to_move; --_free_fields
-#define UNTAKE(f) _taken[f] = player::none(); ++_free_fields
+#define UNTAKE(f) _taken[f] = NONE; ++_free_fields
 #define IS_TAKEN(p, f) (_taken[f] == p)
-#define IS_FREE(f) (_taken[f] == player::none())
+#define IS_FREE(f) (_taken[f] == NONE)
 
   class show
   {
@@ -109,8 +107,8 @@ namespace
     std::ostream& operator() (std::ostream& os) const
     {
       os << "to_move " << player::show (_board._to_move)
-         << " high_water " << _board._high_water[player::blue()]
-         << " " << _board._high_water[player::orange()]
+         << " high_water " << _board._high_water[BLUE]
+         << " " << _board._high_water[ORANGE]
          << " available_stones " << _board._available_stones
          << " free_fields " << _board._free_fields
          << '\n';
@@ -146,7 +144,7 @@ namespace
     return s (os);
   }
 
-#define SWITCH_PLAYER() _to_move = player::other (_to_move)
+#define SWITCH_PLAYER() _to_move = 1 - _to_move
 
 #define INIT_TRAVERSALS()                               \
   const int high_water_old (_high_water[_to_move]);     \
@@ -160,10 +158,10 @@ namespace
 
 #define FINALIZE_TRAVERSALS()                                           \
   _available_stones =                                                   \
-     (  _high_water[_to_move] > high_water_old                          \
-     && _high_water[_to_move] > _high_water[player::other (_to_move)]   \
-     && _high_water[_to_move] > 1                                       \
-     ) ? 3 : 2
+    (  _high_water[_to_move] > high_water_old                           \
+    && _high_water[_to_move] > _high_water[1 - _to_move]                \
+    && _high_water[_to_move] > 1                                        \
+    ) ? 3 : 2
 
   void board::put (int f)
   {
@@ -284,7 +282,7 @@ namespace
                                                                 \
   size += child.first;                                          \
                                                                 \
-  if (d == 0 && child.second == player::other (_to_move))       \
+  if (d == 0 && child.second == 1 - _to_move)                   \
   {                                                             \
     std::cout << show (*this) << '\n';                          \
   }
@@ -305,11 +303,11 @@ namespace
       return {size, in_front()};
     }
 
-    if ( _high_water[player::other (_to_move)] - _high_water[_to_move]
+    if ( _high_water[1 - _to_move] - _high_water[_to_move]
        > _free_fields
        )
     {
-      return {size, player::other (_to_move)};
+      return {size, 1 - _to_move};
     }
 
     const int available_stones (_available_stones);
@@ -375,7 +373,7 @@ namespace
       }
     }
 
-    return {size, player::other (_to_move)};
+    return {size, 1 - _to_move};
   };
 
 #undef RETURN_ON_WINNING_MOVE
@@ -388,7 +386,7 @@ namespace
 
     UNSEE_ALL();
 
-    for (player::player player : {player::blue(), player::orange()})
+    for (player::player player : {BLUE, ORANGE})
     {
       for (int field (0); field < 61; ++field)
       {
@@ -407,29 +405,25 @@ namespace
 #define SIZE(player) size[player][pos[player]]
 #define INC(player) ++pos[player]
 
-    while (  VALID (player::blue())
-          && VALID (player::orange())
-          && (SIZE (player::blue()) == SIZE (player::orange()))
-          )
+    while (VALID (BLUE) && VALID (ORANGE) && (SIZE (BLUE) == SIZE (ORANGE)))
     {
-      INC (player::blue());
-      INC (player::orange());
+      INC (BLUE);
+      INC (ORANGE);
     }
 
-    if (VALID (player::blue()) && VALID (player::orange()))
+    if (VALID (BLUE) && VALID (ORANGE))
     {
-      return (SIZE (player::blue()) > SIZE (player::orange()))
-        ? player::blue() : player::orange();
+      return (SIZE (BLUE) > SIZE (ORANGE)) ? BLUE : ORANGE;
     }
 
-    if (VALID (player::blue()))
+    if (VALID (BLUE))
     {
-      return player::blue();
+      return BLUE;
     }
 
-    if (VALID (player::orange()))
+    if (VALID (ORANGE))
     {
-      return player::orange();
+      return ORANGE;
     }
 
 #undef INC
@@ -447,6 +441,10 @@ namespace
 #undef SEE
 #undef SEEN
 #undef UNSEE_ALL
+
+#undef NONE
+#undef ORANGE
+#undef BLUE
 }
 
 int main()
