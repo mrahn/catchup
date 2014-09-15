@@ -49,13 +49,14 @@ namespace
     board()
       : _to_move (player::blue())
       , _taken()
-      , _high_water (0)
+      , _high_water()
       , _free_fields (61)
       , _available_stones (1)
       , _seen()
     {
       std::fill (_taken[player::blue()], _taken[player::blue()] + 61, false);
       std::fill (_taken[player::orange()], _taken[player::orange()] + 61, false);
+      std::fill (_high_water, _high_water + 2, 0);
     };
 
     void put (int);
@@ -77,7 +78,7 @@ namespace
 
     player::player _to_move;
     bool _taken[2][61];
-    int _high_water;
+    int _high_water[2];
     int _free_fields;
     int _available_stones;
 
@@ -100,7 +101,8 @@ namespace
     std::ostream& operator() (std::ostream& os) const
     {
       os << "to_move " << player::show (_board._to_move)
-         << " high_water " << _board._high_water
+         << " high_water " << _board._high_water[player::blue()]
+         << " " << _board._high_water[player::orange()]
          << " available_stones " << _board._available_stones
          << " free_fields " << _board._free_fields
          << '\n';
@@ -143,17 +145,22 @@ namespace
 
 #define TAKE(f) _taken[_to_move][f] = true; --_free_fields
 
-#define INIT_TRAVERSALS()                       \
-  const int high_water_old (_high_water);       \
-                                                \
+#define INIT_TRAVERSALS()                               \
+  const int high_water_old (_high_water[_to_move]);     \
+                                                        \
   UNSEE_ALL()
 
 #define TRAVERSE(f)                                                     \
-  _high_water = std::max (_high_water, size_of_component (f, _to_move))
+  _high_water[_to_move] = std::max ( _high_water[_to_move]              \
+                                   , size_of_component (f, _to_move)    \
+                                   )
 
 #define FINALIZE_TRAVERSALS()                                           \
   _available_stones =                                                   \
-    (_high_water > high_water_old && _high_water > 1) ? 3 : 2
+     (  _high_water[_to_move] > high_water_old                          \
+     && _high_water[_to_move] > _high_water[player::other (_to_move)]   \
+     && _high_water[_to_move] > 1                                       \
+     ) ? 3 : 2
 
   void board::put (int f)
   {
@@ -209,7 +216,7 @@ namespace
   {
     SWITCH_PLAYER();
 
-    _high_water = high_water;
+    _high_water[_to_move] = high_water;
     _available_stones = available_stones;
 
     UNTAKE (f);
@@ -218,7 +225,7 @@ namespace
   {
     SWITCH_PLAYER();
 
-    _high_water = high_water;
+    _high_water[_to_move] = high_water;
     _available_stones = available_stones;
 
     UNTAKE (f);
@@ -228,7 +235,7 @@ namespace
   {
     SWITCH_PLAYER();
 
-    _high_water = high_water;
+    _high_water[_to_move] = high_water;
     _available_stones = available_stones;
 
     UNTAKE (f);
@@ -295,7 +302,7 @@ namespace
     }
 
     const int available_stones (_available_stones);
-    const int high_water (_high_water);
+    const int high_water = _high_water[_to_move];
 
     if (_available_stones > 2)
     {
