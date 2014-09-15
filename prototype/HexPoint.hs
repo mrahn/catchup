@@ -40,6 +40,10 @@ neighbouring :: Int -> [(HexPoint, [HexPoint])]
 neighbouring n =
   [ (p, [ q | q <- points n, distance q p == 1 ]) | p <- points n ]
 
+linear :: Int -> ([Int],[Int])
+linear s = let ns = map (map (id_of_point s) . snd) (neighbouring s)
+           in (scanl (+) 0 $ map length ns, concat ns)
+
 ------------------------------------------------------------------------------
 
 app :: (Int -> Int) -> HexPoint -> HexPoint
