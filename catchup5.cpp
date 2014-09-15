@@ -92,6 +92,9 @@ namespace
 #define SEEN(field) _seen[field]
 #define SEE(field) _seen[field] = true
 
+#define TAKE(f) _taken[_to_move][f] = true; --_free_fields
+#define UNTAKE(f) _taken[_to_move][f] = false; ++_free_fields
+
   class show
   {
   public:
@@ -142,8 +145,6 @@ namespace
   }
 
 #define SWITCH_PLAYER() _to_move = player::other (_to_move)
-
-#define TAKE(f) _taken[_to_move][f] = true; --_free_fields
 
 #define INIT_TRAVERSALS()                               \
   const int high_water_old (_high_water[_to_move]);     \
@@ -208,9 +209,6 @@ namespace
 #undef FINALIZE_TRAVERSALS
 #undef TRAVERSE
 #undef INIT_TRAVERSALS
-#undef TAKE
-
-#define UNTAKE(f) _taken[_to_move][f] = false; ++_free_fields
 
   void board::unput (int f, int high_water, int available_stones)
   {
@@ -242,8 +240,6 @@ namespace
     UNTAKE (g);
     UNTAKE (h);
   }
-
-#undef UNTAKE
 
 #undef SWITCH_PLAYER
 
@@ -434,6 +430,9 @@ namespace
 
     abort();
   };
+
+#undef UNTAKE
+#undef TAKE
 
 #undef SEE
 #undef SEEN
