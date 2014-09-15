@@ -18,18 +18,16 @@ namespace
     class show
     {
     public:
-      show (bool is_blue, bool is_orange)
-        : _showed_player (is_blue ? 'B' : is_orange ? 'O' : '.')
-      {}
       show (player player)
-        : show (player == blue(), player == orange())
+        : _player (player)
       {}
       std::ostream& operator() (std::ostream& os) const
       {
-        return os << _showed_player;
+        return os <<
+          (_player == blue() ? 'B' : _player == orange() ? 'O' : '.');
       }
     private:
-      char _showed_player;
+      player _player;
     };
     std::ostream& operator<< (std::ostream& os, show const& s)
     {
