@@ -61,9 +61,14 @@ namespace
     void put (int, int);
     void put (int, int, int);
 
-    std::pair<uint64_t, player::player> size_of_tree_for_winning_move();
+    std::pair<uint64_t, player::player> size_of_tree_for_winning_move()
+    {
+      return size_of_tree_for_winning_move (0);
+    }
 
   private:
+    std::pair<uint64_t, player::player> size_of_tree_for_winning_move (int);
+
     void unput (int, int high_water, int available_stones);
     void unput (int, int, int high_water, int available_stones);
     void unput (int, int, int, int high_water, int available_stones);
@@ -273,11 +278,16 @@ namespace
     return size;
   }
 
-#define CHILD()                                   \
-  std::pair<uint64_t, player::player> const child \
-    (size_of_tree_for_winning_move());            \
-                                                  \
-  size += child.first
+#define CHILD()                                                 \
+  std::pair<uint64_t, player::player> const child               \
+    (size_of_tree_for_winning_move (d + 1));                    \
+                                                                \
+  size += child.first;                                          \
+                                                                \
+  if (d == 0 && child.second == player::other (_to_move))       \
+  {                                                             \
+    std::cout << show (*this) << std::endl;                     \
+  }
 
 #define RETURN_ON_WINNING_MOVE()                \
   if (child.second == _to_move)                 \
@@ -285,7 +295,8 @@ namespace
     return {size,_to_move};                     \
   }
 
-  std::pair<uint64_t, player::player> board::size_of_tree_for_winning_move()
+  std::pair<uint64_t, player::player> board::size_of_tree_for_winning_move
+    (int d)
   {
     uint64_t size (1);
 
