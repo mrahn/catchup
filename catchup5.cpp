@@ -301,6 +301,13 @@ namespace
       return {size, in_front()};
     }
 
+    if ( _high_water[player::other (_to_move)] - _high_water[_to_move]
+       > _free_fields
+       )
+    {
+      return {size, player::other (_to_move)};
+    }
+
     const int available_stones (_available_stones);
     const int high_water = _high_water[_to_move];
 
