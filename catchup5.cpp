@@ -33,6 +33,100 @@ namespace
     }
   }
 
+  class hash
+  {
+    struct bucket
+    {
+      bucket()
+      {
+        std::fill (_winner, _winner + 4, NONE);
+      };
+      player::player _taken[61];
+      player::player _winner[4]; // B2 B3 O2 O3
+    };
+
+  public:
+    hash (std::size_t size)
+      : _size (size)
+      , _capacity (size / sizeof (bucket))
+      , _buckets (_capacity)
+      , _put (0)
+      , _hit (0)
+      , _miss_board (0)
+      , _miss_position (0)
+    {
+      std::cout << "cache: size " << _size
+                << " boards " << _capacity
+                << " positions " << _capacity * 4
+                << std::endl;
+    }
+    ~hash()
+    {
+      std::cout << "cache: put " << _put
+                << " hit " << _hit
+                << " miss_board " << _miss_board
+                << " miss_position " << _miss_position
+                << std::endl;
+    }
+
+    void put ( uint64_t key
+             , player::player* taken
+             , player::player to_move
+             , short available_stones
+             , player::player winner
+             )
+    {
+      bucket& b (_buckets[key % _capacity]);
+
+      std::copy (taken, taken + 61, b._taken);
+      b._winner[2 * to_move + available_stones - 2] = winner;
+
+      ++_put;
+    }
+
+    player::player get ( uint64_t key
+                       , player::player* taken
+                       , player::player to_move
+                       , short available_stones
+                       ) const
+    {
+      bucket const& b (_buckets[key % _capacity]);
+
+      for (int field (0); field < 61; ++field)
+      {
+        if (b._taken[field] != taken[field])
+        {
+          ++_miss_board;
+
+          return NONE;
+        }
+      }
+
+      player::player const result
+        (b._winner[2 * to_move + available_stones - 2]);
+
+      if (result != NONE)
+      {
+        ++_hit;
+      }
+      else
+      {
+        ++_miss_position;
+      }
+
+      return result;
+    }
+
+  private:
+    std::size_t _size;
+    std::size_t _capacity;
+    std::vector<bucket> _buckets;
+    mutable std::size_t _put;
+    mutable std::size_t _hit;
+    mutable std::size_t _miss_board;
+    mutable std::size_t _miss_position;
+  };
+
   class show;
 
   class board
