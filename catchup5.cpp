@@ -307,11 +307,14 @@ namespace
       return {size, in_front()};
     }
 
-    if ( _high_water[1 - _to_move] - _high_water[_to_move]
-       > _free_fields
-       )
+    if (_high_water[1 - _to_move] > _free_fields + _high_water[_to_move])
     {
       return {size, 1 - _to_move};
+    }
+
+    if (_high_water[_to_move] > _free_fields + _high_water[1 - _to_move])
+    {
+      return {size, _to_move};
     }
 
     const short available_stones (_available_stones);
@@ -487,7 +490,7 @@ int main()
   b.put (16,9);
   b.put (8,3,45);
   b.put (51,57,58);
-  // b.put (4,27,35);
+  b.put (4,27,35);
   // b.put (43,24,25);
   // b.put (0,1);
   // b.put (2,59,34);
