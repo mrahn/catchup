@@ -385,51 +385,62 @@ namespace
 
   player::player board::in_front()
   {
-    short size[2][61];
-    short top[2] = {0,0};
-
-    UNSEE_ALL();
-
-    for (player::player player : {BLUE, ORANGE})
+    if (_high_water[BLUE] > _high_water[ORANGE])
     {
-      for (short field (0); field < 61; ++field)
+      return BLUE;
+    }
+    else if (_high_water[ORANGE] > _high_water[BLUE])
+    {
+      return ORANGE;
+    }
+    else
+    {
+      short size[2][61];
+      short top[2] = {0,0};
+
+      UNSEE_ALL();
+
+      for (player::player player : {BLUE, ORANGE})
       {
-        if (!SEEN (field) && IS_TAKEN (player, field))
+        for (short field (0); field < 61; ++field)
         {
-          size[player][top[player]++] = size_of_component (field, player);
+          if (!SEEN (field) && IS_TAKEN (player, field))
+          {
+            size[player][top[player]++] = size_of_component (field, player);
+          }
         }
+
+        std::sort ( size[player], size[player] + top[player]
+                  , std::greater<short>()
+                  );
       }
 
-      std::sort ( size[player], size[player] + top[player]
-                , std::greater<short>()
-                );
-    }
-
-    short pos[2] = {0,0};
+      short pos[2] = {0,0};
 
 #define VALID(player) (pos[player] != top[player])
 #define SIZE(player) size[player][pos[player]]
 #define INC(player) ++pos[player]
 
-    while (VALID (BLUE) && VALID (ORANGE) && (SIZE (BLUE) == SIZE (ORANGE)))
-    {
-      INC (BLUE);
-      INC (ORANGE);
-    }
+      while (VALID (BLUE) && VALID (ORANGE) && (SIZE (BLUE) == SIZE (ORANGE)))
+      {
+        INC (BLUE);
+        INC (ORANGE);
+      }
 
-    if (VALID (BLUE) && VALID (ORANGE))
-    {
-      return (SIZE (BLUE) > SIZE (ORANGE)) ? BLUE : ORANGE;
-    }
+      if (VALID (BLUE) && VALID (ORANGE))
+      {
+        return (SIZE (BLUE) > SIZE (ORANGE)) ? BLUE : ORANGE;
+      }
 
-    if (VALID (BLUE))
-    {
-      return BLUE;
-    }
+      if (VALID (BLUE))
+      {
+        return BLUE;
+      }
 
-    if (VALID (ORANGE))
-    {
-      return ORANGE;
+      if (VALID (ORANGE))
+      {
+        return ORANGE;
+      }
     }
 
 #undef INC
