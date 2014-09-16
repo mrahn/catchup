@@ -487,7 +487,7 @@ int main()
   b.put (16,9);
   b.put (8,3,45);
   b.put (51,57,58);
-  b.put (4,27,35);
+  // b.put (4,27,35);
   // b.put (43,24,25);
   // b.put (0,1);
   // b.put (2,59,34);
@@ -505,3 +505,31 @@ int main()
 
   return 0;
 }
+
+/*
+to_move O high_water 19 17 available_stones 3 free_fields 19
+     . . . O .
+    O B B O B O
+   . O O B O B O
+  . O B O O B . .
+ . . O B B O B O .
+  . B O O B O B .
+   . B O B O B B
+    . B O B B .
+     . B B . .
+
+to_move B high_water 19 23 available_stones 3 free_fields 16
+     . . . O O
+    O B B O B O
+   . O O B O B O
+  . O B O O B O .
+ . O O B B O B O .
+  . B O O B O B .
+   . B O B O B B
+    . B O B B .
+     . B B . .
+
+winner: O
+size_of_tree_for_winning_move: 905737430
+catchup5.exe: 397.21 sec(s)
+*/
