@@ -494,7 +494,7 @@ namespace
     for (int field (0); field < 61; ++field)
     {
       key ^= _magic[field * _taken[field]];
-      value[field >> 5] = _taken[field];
+      value[field >> 5] += _taken[field];
       value[field >> 5] <<= 2;
     }
 
