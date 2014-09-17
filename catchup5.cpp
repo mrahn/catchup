@@ -467,13 +467,6 @@ namespace
   {
     uint64_t size (1);
 
-    if (_free_fields == 0)
-    {
-      ++_leaf;
-
-      return {size, in_front()};
-    }
-
     if (_high_water[1 - _to_move] > _free_fields + _high_water[_to_move])
     {
       ++_high_water_other;
@@ -507,6 +500,17 @@ namespace
     if (_cache.get (key, value, _to_move, _available_stones) == _to_move)
     {
       return {size, _to_move};
+    }
+
+    if (_free_fields == 0)
+    {
+      ++_leaf;
+
+      player::player const result (in_front());
+
+      _cache.put (key, value, _to_move, _available_stones, result);
+
+      return {size, result};
     }
 
     const short available_stones (_available_stones);
