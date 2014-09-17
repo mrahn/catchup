@@ -491,11 +491,17 @@ namespace
     uint64_t key (0);
     uint64_t value[2] = {0,0};
 
-    for (int field (0); field < 61; ++field)
+    for (int field (0); field < 32; ++field)
     {
       key ^= _magic[field * _taken[field]];
-      value[field >> 5] += _taken[field];
-      value[field >> 5] <<= 2;
+      value[0] += _taken[field];
+      value[0] <<= 2;
+    }
+    for (int field (32); field < 61; ++field)
+    {
+      key ^= _magic[field * _taken[field]];
+      value[1] += _taken[field];
+      value[1] <<= 2;
     }
 
     if (_cache.get (key, value, _to_move, _available_stones) == _to_move)
