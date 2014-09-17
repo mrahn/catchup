@@ -107,7 +107,7 @@ namespace
         std::fill (b._winner, b._winner + 6, NONE);
         ++_put_board;
       }
-      b._winner[3 * to_move + available_stones - 3] = winner;
+      b._winner[3 * to_move + 3 - available_stones] = winner;
 
       ++_put_position;
     }
@@ -128,7 +128,7 @@ namespace
       }
 
       player::player const result
-        (b._winner[3 * to_move + available_stones - 3]);
+        (b._winner[3 * to_move + 3 - available_stones]);
 
       if (result != NONE)
       {
