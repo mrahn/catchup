@@ -51,7 +51,9 @@ namespace
       , _capacity (size / sizeof (bucket))
       , _buckets (_capacity)
       , _put_board (0)
+      , _replace_board (0)
       , _put_position (0)
+      , _replace_position (0)
       , _hit (0)
       , _miss_board (0)
       , _miss_position (0)
@@ -83,7 +85,9 @@ namespace
       }
 
       std::cout << "cache: put_board " << _put_board
+                << " replace_board " << _replace_board
                 << " put_position " << _put_position
+                << " replace_position " << _replace_position
                 << " num_board " << num_board
                 << " num_position " << num_position
                 << " hit " << _hit
@@ -103,6 +107,19 @@ namespace
 
       if (b._value[0] != value[0] || b._value[1] != value[1])
       {
+        if (b._value[0] != 0 || b._value[1] != 0)
+        {
+          ++_replace_board;
+
+          for (player::player result (0); result < 4; ++result)
+          {
+            if (b._winner[result] != NONE)
+            {
+              ++_replace_position;
+            }
+          }
+        }
+
         std::copy (value, value + 2, b._value);
         std::fill (b._winner, b._winner + 6, NONE);
         ++_put_board;
@@ -153,7 +170,9 @@ namespace
     std::size_t _capacity;
     std::vector<bucket> _buckets;
     mutable std::size_t _put_board;
+    mutable std::size_t _replace_board;
     mutable std::size_t _put_position;
+    mutable std::size_t _replace_position;
     mutable std::size_t _hit;
     mutable std::size_t _miss_board;
     mutable std::size_t _miss_position;
