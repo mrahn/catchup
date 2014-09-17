@@ -63,8 +63,29 @@ namespace
     }
     ~hash()
     {
+      std::size_t num_board (0);
+      std::size_t num_position (0);
+
+      for (bucket& b : _buckets)
+      {
+        if (b._value[0] != 0 || b._value[1] != 0)
+        {
+          ++num_board;
+
+          for (player::player result (0); result < 6; ++result)
+          {
+            if (b._winner[result] != NONE)
+            {
+              ++num_position;
+            }
+          }
+        }
+      }
+
       std::cout << "cache: put_board " << _put_board
                 << " put_position " << _put_position
+                << " num_board " << num_board
+                << " num_position " << num_position
                 << " hit " << _hit
                 << " miss_board " << _miss_board
                 << " miss_position " << _miss_position
