@@ -685,29 +685,37 @@ int main()
 }
 
 /*
-to_move O high_water 19 17 available_stones 3 free_fields 19
-     . . . O .
-    O B B O B O
-   . O O B O B O
-  . O B O O B . .
- . . O B B O B O .
-  . B O O B O B .
-   . B O B O B B
-    . B O B B .
-     . B B . .
+cache: size 1073741824 boards 44739242 positions 178956968
+to_move O high_water 16 15 available_stones 2 free_fields 23
+     O O . B .
+    O B O O B .
+   . O B B O B .
+  . B O . B O . .
+ . O B O O B O O O
+  . B O B B B B B
+   . B B . . O .
+    . . B O O .
+     . . . . .
 
-to_move B high_water 19 23 available_stones 3 free_fields 16
-     . . . O O
-    O B B O B O
-   . O O B O B O
-  . O B O O B O .
- . O O B B O B O .
-  . B O O B O B .
-   . B O B O B B
-    . B O B B .
-     . B B . .
+winner: B
+size_of_tree_for_winning_move: 236317516
+cache: put_board 8765754 put_position 13544617 hit 177257329 miss_board 8765756 miss_position 3883637
+catchup5.exe: 98.76 sec(s)
 
-winner: O
-size_of_tree_for_winning_move: 905737430
-catchup5.exe: 397.21 sec(s)
+cache: size 1073741824 boards 44739242 positions 178956968
+to_move O high_water 14 5 available_stones 3 free_fields 27
+     . . . . .
+    . . B O . O
+   . B B O B B .
+  . B O O B O . .
+ . B O . B . O B .
+  . B B . . O B .
+   O O B O O B .
+    . O B B B .
+     . O O . .
+
+winner: B
+size_of_tree_for_winning_move: 15233973494
+cache: put_board 361320941 put_position 492679877 hit 11111748204 miss_board 361320978 miss_position 47905387
+catchup5.exe: 8279.94 sec(s)
 */
