@@ -493,13 +493,13 @@ namespace
 
     for (int field (0); field < 32; ++field)
     {
-      key ^= _magic[field * _taken[field]];
+      key ^= _magic[61 * _taken[field] + field];
       value[0] += _taken[field];
       value[0] <<= 2;
     }
     for (int field (32); field < 61; ++field)
     {
-      key ^= _magic[field * _taken[field]];
+      key ^= _magic[61 * _taken[field] + field];
       value[1] += _taken[field];
       value[1] <<= 2;
     }
