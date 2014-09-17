@@ -111,7 +111,7 @@ namespace
         {
           ++_replace_board;
 
-          for (player::player result (0); result < 4; ++result)
+          for (player::player result (0); result < 6; ++result)
           {
             if (b._winner[result] != NONE)
             {
