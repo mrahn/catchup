@@ -107,7 +107,13 @@ namespace
         std::fill (b._winner, b._winner + 6, NONE);
         ++_put_board;
       }
-      b._winner[3 * to_move + 3 - available_stones] = winner;
+
+      switch (available_stones)
+      {
+      case 1:  b._winner[3 * to_move + 3 - 1] = winner;
+      case 2:  b._winner[3 * to_move + 3 - 2] = winner;
+      default: b._winner[3 * to_move + 3 - 3] = winner;
+      }
 
       ++_put_position;
     }
