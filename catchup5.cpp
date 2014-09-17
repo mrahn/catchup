@@ -42,7 +42,7 @@ namespace
         std::fill (_value, _value + 2, 0);
       };
       uint64_t _value[2];
-      player::player _winner[4]; // B2 B3 O2 O3
+      player::player _winner[6]; // B1 B2 B3 O1 O2 O3
     };
 
   public:
@@ -58,7 +58,7 @@ namespace
     {
       std::cout << "cache: size " << _size
                 << " boards " << _capacity
-                << " positions " << _capacity * 4
+                << " positions " << _capacity * 6
                 << std::endl;
     }
     ~hash()
@@ -83,10 +83,10 @@ namespace
       if (b._value[0] != value[0] || b._value[1] != value[1])
       {
         std::copy (value, value + 2, b._value);
-        std::fill (b._winner, b._winner + 4, NONE);
+        std::fill (b._winner, b._winner + 6, NONE);
         ++_put_board;
       }
-      b._winner[2 * to_move + available_stones - 2] = winner;
+      b._winner[3 * to_move + available_stones - 3] = winner;
 
       ++_put_position;
     }
@@ -107,7 +107,7 @@ namespace
       }
 
       player::player const result
-        (b._winner[2 * to_move + available_stones - 2]);
+        (b._winner[3 * to_move + available_stones - 3]);
 
       if (result != NONE)
       {
