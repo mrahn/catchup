@@ -509,16 +509,6 @@ namespace
 
   player::player board::in_front()
   {
-    if (_high_water[BLUE] > _high_water[ORANGE])
-    {
-      return BLUE;
-    }
-    else if (_high_water[ORANGE] > _high_water[BLUE])
-    {
-      return ORANGE;
-    }
-    else
-    {
       short size[2][61];
       short top[2] = {0,0};
 
@@ -565,7 +555,6 @@ namespace
       {
         return ORANGE;
       }
-    }
 
 #undef INC
 #undef SIZE
