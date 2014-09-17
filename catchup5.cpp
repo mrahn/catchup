@@ -150,10 +150,20 @@ namespace
       , _free_fields (61)
       , _available_stones (1)
       , _seen()
+      , _leaf (0)
+      , _high_water_other (0)
+      , _high_water_to_move (0)
     {
       std::fill (_taken, _taken + 61, NONE);
       std::fill (_high_water, _high_water + 2, 0);
     };
+    ~board()
+    {
+      std::cout << "board: leaf " << _leaf
+                << " high_water_other " << _high_water_other
+                << " high_water_to_move " << _high_water_to_move
+                << std::endl;
+    }
 
     void put (short);
     void put (short, short);
@@ -188,6 +198,10 @@ namespace
     short size_of_component (short f, player::player);
 
     player::player in_front();
+
+    mutable std::size_t _leaf;
+    mutable std::size_t _high_water_other;
+    mutable std::size_t _high_water_to_move;
   };
 
 #define UNSEE_ALL() std::fill (_seen, _seen + 61, false);
@@ -407,16 +421,22 @@ namespace
 
     if (_free_fields == 0)
     {
+      ++_leaf;
+
       return {size, in_front()};
     }
 
     if (_high_water[1 - _to_move] > _free_fields + _high_water[_to_move])
     {
+      ++_high_water_other;
+
       return {size, 1 - _to_move};
     }
 
     if (_high_water[_to_move] > _free_fields + _high_water[1 - _to_move])
     {
+      ++_high_water_to_move;
+
       return {size, _to_move};
     }
 
