@@ -322,7 +322,7 @@ namespace
 #define FINALIZE_TRAVERSALS()                                           \
   _available_stones =                                                   \
     (  _high_water[_to_move] > high_water_old                           \
-    && _high_water[_to_move] > _high_water[1 - _to_move]                \
+    && _high_water[_to_move] >= _high_water[1 - _to_move]               \
     && _high_water[_to_move] > 1                                        \
     ) ? 3 : 2
 
