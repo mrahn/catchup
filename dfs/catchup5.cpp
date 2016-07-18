@@ -733,11 +733,63 @@ void lg1659772 (board* b)
   b->put (49,3);
 }
 
+void lg1793675 (board* b)
+{
+  b->put (39);
+  b->put (38,30);
+  b->put (23,13,28);
+  b->put (15,16);
+  b->put (52,44);
+  b->put (40,47);
+  b->put (59,1);
+  b->put (12,20);
+  b->put (21,29);
+  b->put (22,46,8);
+  b->put (7,45,53);
+  b->put (36,27);
+  b->put (37,41);
+  b->put (60,54,2);
+  b->put (24,32,17);
+  b->put (19,43);
+  b->put (10,9);
+  b->put (0,6);
+  b->put (48,3);
+  b->put (50,51);
+  b->put (31,55);
+  b->put (57,58);
+  b->put (5,11);
+  b->put (25,33);
+  b->put (18,26);
+  b->put (42,49);
+  b->put (14,35);
+}
+
+void lg1793690 (board* b)
+{
+  b->put (38);
+  b->put (30,46);
+  b->put (21,31);
+  b->put (40,37);
+  b->put (47,28);
+  b->put (20,14);
+  b->put (29,39);
+  b->put (22,13,23);
+  b->put (19,32);
+  b->put (24,33,41);
+  b->put (48,49,11);
+  b->put (45,12,0);
+  b->put (44,51);
+  b->put (36,53);
+  b->put (6,7);
+  b->put (5,42);
+  b->put (43,35,27);
+}
+
 int main()
 {
   board b (1UL << 30);
 
-  lg1659736 (&b);
+  lg1793690 (&b);
 
   std::cout << show (b) << '\n';
 
@@ -784,4 +836,47 @@ winner: B
 size_of_tree_for_winning_move: 15233973494
 cache: put_board 361320941 put_position 492679877 hit 11111748204 miss_board 361320978 miss_position 47905387
 catchup5.exe: 8279.94 sec(s)
+
+** lg1793690 **
+rahn@tralxtri:~/catchup/dfs$ make catchup5.run
+g++ -std=c++11 -Wall -Wextra -O3 -fno-exceptions   -c -o catchup5.o catchup5.cpp
+g++ -o catchup5.exe catchup5.o
+cache: size 2147483648 boards 67108864 positions 402653184
+to_move O high_water 17 14 available_stones 3 free_fields 23
+     O . . . .
+    O B B . . .
+   B O O O . . .
+  . B O B O O O .
+ . B B B O B B O .
+  B O O B B O O O
+   B B O O B B B
+    . B . O . .
+     . . . . .
+
+winner: B
+size_of_tree_for_winning_move: 14178553699
+board: leaf 40811365 high_water_other 263634074 high_water_to_move 635100105
+cache: put_board 1152714997 replace_board 1086123570 put_position 2043396286 replace_position 1795735399 num_board 66591427 num_position 115587425 hit 11937339498 miss_board 1152714996 miss_position 189765026
+catchup5.exe: 5906.83 sec(s)
+
+rahn@tralxtri:~/catchup/dfs$ make catchup5.run
+g++ -std=c++11 -Wall -Wextra -O3 -fno-exceptions   -c -o catchup5.o catchup5.cpp
+g++ -o catchup5.exe catchup5.o
+cache: size 1073741824 boards 33554432 positions 201326592
+to_move O high_water 17 14 available_stones 3 free_fields 23
+     O . . . .
+    O B B . . .
+   B O O O . . .
+  . B O B O O O .
+ . B B B O B B O .
+  B O O B B O O O
+   B B O O B B B
+    . B . O . .
+     . . . . .
+
+winner: B
+size_of_tree_for_winning_move: 23031276292
+board: leaf 73224207 high_water_other 487515792 high_water_to_move 1107611070
+cache: put_board 2025126819 replace_board 1991574321 put_position 3532470122 replace_position 3287336158 num_board 33552498 num_position 60864052 hit 19090596078 miss_board 2025126818 miss_position 320426534
+catchup5.exe: 8999.83 sec(s)
 */
