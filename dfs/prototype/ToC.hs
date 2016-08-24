@@ -9,10 +9,7 @@ import System.Environment (getArgs)
 ------------------------------------------------------------------------------
 
 main :: IO ()
-main = do
-  putStr "lg ({"
-  getArgs >>= mapM_ putStr . map (c . lg_from_string)
-  putStrLn "});"
+main = getArgs >>= mapM_ putStr . map (c . lg_from_string)
 
 ------------------------------------------------------------------------------
 
@@ -20,8 +17,8 @@ points_from_lg :: [[String]] -> [[Point2D.Point2D]]
 points_from_lg = map (map (Point2D.read_lg_move 5))
 
 c :: [[String]] -> String
-c = tail . concat
-  . map ( \ xs -> ",{" ++ (tail $ init $ show xs) ++ "}")
+c = concat
+  . map ( \ xs -> "b->put (" ++ (tail $ init $ show xs) ++ ");\n")
   . map (map (HexPoint.id_of_point 5 . HexPoint.mirror 2 . Point2D.hexangular 5))
   . points_from_lg
 
