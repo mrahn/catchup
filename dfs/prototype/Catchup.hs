@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module Catchup (Catchup, catchup, result, mirror) where
+module Catchup (Catchup, catchup, result, mirror, normal, all_suc) where
 
 import qualified Util (join, select, unique)
 import qualified Player (Player (Blue, Orange), other)
