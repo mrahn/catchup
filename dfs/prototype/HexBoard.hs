@@ -24,7 +24,7 @@ import qualified Data.Map
    )
 import qualified Data.Set (Set, fromList, delete, map)
 import qualified Data.List (groupBy, sortBy)
-import qualified Control.Monad.State (State, get, modify, evalState)
+import qualified Control.Monad.Trans.State (State, get, modify, evalState)
 
 ------------------------------------------------------------------------------
 
@@ -113,31 +113,31 @@ instance Show HexBoard where
 
 ------------------------------------------------------------------------------
 
-eval_int64 :: Control.Monad.State.State Data.Int.Int64 a -> a
-eval_int64 = flip Control.Monad.State.evalState 0
+eval_int64 :: Control.Monad.Trans.State.State Data.Int.Int64 a -> a
+eval_int64 = flip Control.Monad.Trans.State.evalState 0
 
 componentM :: Player.Player -> HexBoard -> Int
-           -> Control.Monad.State.State Data.Int.Int64 Int
+           -> Control.Monad.Trans.State.State Data.Int.Int64 Int
 componentM player b field
   | Data.Map.lookup field (stone b) == Just player = do
-    cache <- Control.Monad.State.get
+    cache <- Control.Monad.Trans.State.get
     let pos = Data.Bits.shiftL 1 field
     case (pos Data.Bits..&. cache /= 0) of
-      False -> do Control.Monad.State.modify ((Data.Bits..|.) pos)
+      False -> do Control.Monad.Trans.State.modify ((Data.Bits..|.) pos)
                   vs <- mapM (componentM player b) (neighbours b field)
                   return $ succ $ sum vs
       _ -> return 0
 componentM _ _ _ = return 0
 
 componentsM :: Player.Player -> HexBoard -> [Int]
-            -> Control.Monad.State.State Data.Int.Int64 [Int]
+            -> Control.Monad.Trans.State.State Data.Int.Int64 [Int]
 componentsM player b = mapM (componentM player b)
 
 size_of_components :: Player.Player -> HexBoard -> [Int] -> [Int]
 size_of_components player b fs = eval_int64 (componentsM player b fs)
 
 all_componentsM :: Player.Player -> HexBoard
-                -> Control.Monad.State.State Data.Int.Int64 [Int]
+                -> Control.Monad.Trans.State.State Data.Int.Int64 [Int]
 all_componentsM player b =
   componentsM player b (Data.Map.findWithDefault [] player (taken b))
 

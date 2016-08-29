@@ -15,7 +15,7 @@ import qualified HexBoard
   )
 import qualified Data.Map (Map, empty, insert, lookup)
 import qualified Data.Set (toList)
-import qualified Control.Monad.State (State, get, modify, evalState)
+import qualified Control.Monad.Trans.State (State, get, modify, evalState)
 
 ------------------------------------------------------------------------------
 
@@ -101,10 +101,10 @@ paths c
 ------------------------------------------------------------------------------
 
 resultM :: Catchup
-        -> Control.Monad.State.State
+        -> Control.Monad.Trans.State.State
            (Data.Map.Map (Player.Player, Data.Map.Map Int Player.Player) Player.Player) Player.Player
 resultM c = do
-    cache <- Control.Monad.State.get
+    cache <- Control.Monad.Trans.State.get
     let key =  (to_move c, HexBoard.stone $ board c)
     case Data.Map.lookup key cache of
       Just v -> return v
@@ -116,7 +116,7 @@ resultM c = do
           cs -> do rs <- mapM resultM cs
                    let sel = (if any (==to_move c) rs then id else Player.other)
                    return $ sel (to_move c)
-        Control.Monad.State.modify (Data.Map.insert key r)
+        Control.Monad.Trans.State.modify (Data.Map.insert key r)
         return r
 
 compare_sizes :: [Int] -> [Int] -> Player.Player
@@ -127,8 +127,8 @@ compare_sizes (b:bs) (o:os) = case compare b o of
 compare_sizes (_:_) [] = Player.Blue
 compare_sizes _ _ = Player.Orange
 
-eval_map :: Control.Monad.State.State (Data.Map.Map k v) a -> a
-eval_map = flip Control.Monad.State.evalState Data.Map.empty
+eval_map :: Control.Monad.Trans.State.State (Data.Map.Map k v) a -> a
+eval_map = flip Control.Monad.Trans.State.evalState Data.Map.empty
 
 result :: Catchup -> Player.Player
 result c = eval_map (resultM c)
