@@ -51,6 +51,7 @@ instance Put.Put [Int] Catchup where
                              then [1,2,3] else [1,2]
                          }
     where new_board = puts fields (board c)
+          puts :: [Int] -> HexBoard -> HexBoard
           puts (f:fs) b = puts fs (Put.put (to_move c, f) b)
           puts [] b = b
           csize = maximum $ HexBoard.size_of_components (to_move c) new_board fields
