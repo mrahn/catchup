@@ -4,11 +4,69 @@ module HexPoint
   )
 where
 
-import qualified Data.Map (fromList, (!))
+import qualified Data.Map (fromList, (!), fromListWith, Map)
+import Data.List (sort, sortBy, intersperse)
+import qualified Data.Set
+
+uniq :: Ord a => [a] -> [a]
+uniq = Data.Set.toList . Data.Set.fromList
+
+uniqBy :: (Ord b, Eq b) => (a -> b) -> [a] -> [(a, b)]
+uniqBy f = dedup . sortBy (\ x y -> compare (snd x) (snd y)) . decorate f
+  where dedup (x:y:rest)
+          | snd x == snd y = dedup (x:rest)
+          | otherwise = x : dedup (y:rest)
+        dedup rest = rest
+
+decorate f xs = [ (x, f x) | x <- xs ]
 
 ------------------------------------------------------------------------------
 
-data HexPoint = HexPoint Int Int Int deriving (Eq, Ord)
+data HexPoint = HexPoint Int Int Int deriving (Eq, Ord, Show, Read)
+
+grow (HexPoint x y z) =
+   [ HexPoint (x + 1)  y      (z - 1)
+   , HexPoint (x - 1)  y      (z + 1)
+   , HexPoint (x + 1) (y - 1)  z
+   , HexPoint (x - 1) (y + 1)  z
+   , HexPoint  x      (y + 1) (z - 1)
+   , HexPoint  x      (y - 1) (z + 1)
+   ]
+
+select [] = []
+select (x:xs) = (x,xs) : [ (y,x:rest) | (y,rest) <- select xs ]
+
+grows ps = [ (p:s:rest) | (p,rest) <- select ps, s <- grow p ]
+
+growS b = filter (\ n -> length n > length b) . map uniq . grows $ b
+
+boards 0 = [[HexPoint 0 0 0]]
+boards n = uniq . map normal . concatMap growS . boards . pred $ n
+
+normal hs = minimum [ Data.List.sort ns | t <- ts, let ns = map t hs ]
+
+permutations :: [a] -> [[a]]
+permutations []     = [[]]
+permutations (x:xs) = [ zs | ys <- permutations xs , zs <- everywhere x ys ]
+
+everywhere :: a -> [a] -> [[a]]
+everywhere x []     = [[x]]
+everywhere x (y:ys) = (x:y:ys) : [ y:zs | zs <- everywhere x ys ]
+
+cross l = [ (x,y) | x <- l, y <- l ]
+
+mk_s i b = let hs = zip i b
+           in [ (p,q) | ((p,l),(q,r)) <- cross hs, neighbourQ l r ]
+
+struct :: [HexPoint] -> [(Int, Int)]
+struct b =
+  minimum $ map (sort . flip mk_s b) (permutations $ take (length b) [0..])
+
+dboards :: Int -> [([HexPoint],[(Int,Int)])]
+dboards = uniqBy struct . boards
+
+mk_m :: [(Int,Int)] -> Data.Map.Map Int [Int]
+mk_m = Data.Map.fromListWith (++) . map (\(x,y) -> (x,[y]))
 
 points :: Int -> [HexPoint]
 points n = [ HexPoint x y z | x <- line, y <- line, z <- line
@@ -33,8 +91,10 @@ coordinates :: HexPoint -> [Int]
 coordinates (HexPoint x y z) = [x, y, z]
 
 distance :: HexPoint -> HexPoint -> Int
-distance p =
-  flip div 2 . sum . map abs . zipWith (-) (coordinates p) . coordinates
+distance (HexPoint a b c) (HexPoint x y z) =
+  flip div 2 $ abs (a - x) + abs (b - y) + abs (c - z)
+
+neighbourQ p = (==1) . distance p
 
 neighbouring :: Int -> [(HexPoint, [HexPoint])]
 neighbouring n =
@@ -74,6 +134,8 @@ rorrim 2 (HexPoint y x z) = HexPoint x y z
 rorrim 3 (HexPoint y z x) = HexPoint x y z
 rorrim 4 (HexPoint z x y) = HexPoint x y z
 rorrim 5 (HexPoint z y x) = HexPoint x y z
+
+ts = [ mirror k | k <- [0..5] ] ++ [ mirror k . rotate60 | k <- [0..5] ]
 
 transformations :: Int -> [[Int]]
 transformations s =
