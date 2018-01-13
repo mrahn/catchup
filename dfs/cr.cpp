@@ -585,7 +585,6 @@ namespace
 
 int main()
 {
-  storage storage;
   int n {0};
   int s {0};
   auto shift ([&s] (int x) -> int { return s + x; });
@@ -596,6 +595,7 @@ int main()
   while (std::getline (std::cin, line))
   {
     neighbours const neighbours {line.data()};
+    storage storage;
 
     for (int f {0}; f < neighbours.count(); ++f)
     {
