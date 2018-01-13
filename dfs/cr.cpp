@@ -382,19 +382,19 @@ namespace
         ++count_leafs;
 
         std::array<std::vector<int>, 2> sizes;
-        std::array<memory, 2> memories {_ns.count(), _ns.count()};
+        memory memory {_ns.count()};
 
         for (int f {0}; f < _ns.count(); ++f)
         {
           assert (TAKEN (0, f) || TAKEN (1, f));
 
-          if (TAKEN (0, f) && !memories[0].seen (f))
+          if (TAKEN (0, f) && !memory.seen (f))
           {
-            sizes[0].emplace_back (size_of_component (memories[0], 0, f));
+            sizes[0].emplace_back (size_of_component (memory, 0, f));
           }
-          else if (TAKEN (1, f) && !memories[1].seen (f))
+          else if (TAKEN (1, f) && !memory.seen (f))
           {
-            sizes[1].emplace_back (size_of_component (memories[1], 1, f));
+            sizes[1].emplace_back (size_of_component (memory, 1, f));
           }
         }
 
