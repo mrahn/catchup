@@ -323,6 +323,7 @@ namespace
       , _open (_ns.count())
     {
       assert (k < _ns.count());
+      assert (k <= 32);
 
       _val[_player] |= (1 << k);
       _player = 1 - _player;
