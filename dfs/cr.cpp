@@ -280,10 +280,16 @@ namespace
     }
   };
 
+#ifndef NDEBUG
+#define NAME(...) __VA_ARGS__
+#else
+#define NAME(...)
+#endif
+
   class memory
   {
   public:
-    memory (int k)
+    memory (int NAME (k))
       : _ {0}
     {
       assert (k <= 32);
