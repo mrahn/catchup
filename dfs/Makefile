@@ -1,5 +1,5 @@
 
-CXXFLAGS += -std=c++11
+CXXFLAGS += -std=c++1z
 CXXFLAGS += -Wall
 CXXFLAGS += -Wextra
 CXXFLAGS += -O3
