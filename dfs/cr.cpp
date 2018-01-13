@@ -280,6 +280,24 @@ namespace
     }
   };
 
+  class memory
+  {
+  public:
+    memory (int k)
+      : _ (k, false)
+    {}
+    bool seen (int k) const
+    {
+      return _[k];
+    }
+    void see (int k)
+    {
+      _[k] = true;
+    }
+  private:
+    std::vector<bool> _;
+  };
+
   class board
   {
   public:
@@ -302,16 +320,16 @@ namespace
       _val[_player] |= (1 << k);
       _player = 1 - _player;
     }
-    int size_of_component (std::vector<bool>& seen, int player, int k) const
+    int size_of_component (memory& memory, int player, int k) const
     {
       int s {0};
       int pos {0};
 
       assert (_field[player][k]);
-      if (!seen[k])
+      if (!memory.seen (k))
       {
         _open[pos++] = k;
-        seen[k] = true;
+        memory.see (k);
         ++s;
       }
 
@@ -321,10 +339,10 @@ namespace
         for (int k {0}; k < _ns.count (f); ++k)
         {
           int const n (_ns (f, k));
-          if (!seen[n] && _field[player][n])
+          if (!memory.seen (n) && _field[player][n])
           {
             _open[pos++] = n;
-            seen[n] = true;
+            memory.see (n);
             ++s;
           }
         }
@@ -355,22 +373,19 @@ namespace
         ++count_leafs;
 
         std::array<std::vector<int>, 2> sizes;
-        std::array<std::vector<bool>, 2> seen
-          { std::vector<bool> (_ns.count(), false)
-          , std::vector<bool> (_ns.count(), false)
-          };
+        std::array<memory, 2> memories {_ns.count(), _ns.count()};
 
         for (int f {0}; f < _ns.count(); ++f)
         {
           assert (_field[0][f] || _field[1][f]);
 
-          if (_field[0][f] && !seen[0][f])
+          if (_field[0][f] && !memories[0].seen (f))
           {
-            sizes[0].emplace_back (size_of_component (seen[0], 0, f));
+            sizes[0].emplace_back (size_of_component (memories[0], 0, f));
           }
-          else if (_field[1][f] && !seen[1][f])
+          else if (_field[1][f] && !memories[1].seen (f))
           {
-            sizes[1].emplace_back (size_of_component (seen[1], 1, f));
+            sizes[1].emplace_back (size_of_component (memories[1], 1, f));
           }
         }
 
@@ -448,10 +463,10 @@ namespace
                     _val[_player] |= (1 << y);
                     _val[_player] |= (1 << z);
                     _free -= 3;
-                    std::vector<bool> seen (_ns.count(), false);
-                    int const c (std::max ( size_of_component (seen, _player, x)
-                                ,std::max ( size_of_component (seen, _player, y)
-                                          , size_of_component (seen, _player, z)
+                    memory m {_ns.count()};
+                    int const c (std::max ( size_of_component (m, _player, x)
+                                ,std::max ( size_of_component (m, _player, y)
+                                          , size_of_component (m, _player, z)
                                           )
                                           )
                                 );
@@ -500,9 +515,9 @@ namespace
                 _val[_player] |= (1 << x);
                 _val[_player] |= (1 << y);
                 _free -= 2;
-                std::vector<bool> seen (_ns.count(), false);
-                int const c (std::max ( size_of_component (seen, _player, x)
-                                      , size_of_component (seen, _player, y)
+                memory m {_ns.count()};
+                int const c (std::max ( size_of_component (m, _player, x)
+                                      , size_of_component (m, _player, y)
                                       )
                             );
                 if (c > _score[_player])
@@ -540,8 +555,8 @@ namespace
             _field[_player][x] = true;
             _val[_player] |= (1 << x);
             _free -= 1;
-            std::vector<bool> seen (_ns.count(), false);
-            int const c (size_of_component (seen, _player, x));
+            memory m {_ns.count()};
+            int const c (size_of_component (m, _player, x));
             if (c > _score[_player])
             {
               _score[_player] = c;
