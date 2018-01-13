@@ -284,18 +284,20 @@ namespace
   {
   public:
     memory (int k)
-      : _ (k, false)
-    {}
+      : _ {0}
+    {
+      assert (k <= 32);
+    }
     bool seen (int k) const
     {
-      return _[k];
+      return (_ & (1 << k)) > 0;
     }
     void see (int k)
     {
-      _[k] = true;
+      _ |= (1 << k);
     }
   private:
-    std::vector<bool> _;
+    std::uint32_t _;
   };
 
   class board
