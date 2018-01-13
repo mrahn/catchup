@@ -6,7 +6,6 @@
 #include <iostream>
 #include <optional>
 #include <set>
-#include <stack>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -295,6 +294,7 @@ namespace
       , _free (_ns.count() - 1)
       , _val {0, 0}
       , _storage (storage)
+      , _open (_ns.count())
     {
       assert (k < _ns.count());
 
@@ -305,25 +305,25 @@ namespace
     int size_of_component (std::vector<bool>& seen, int player, int k) const
     {
       int s {0};
-      std::stack<int> open;
+      int pos {0};
 
       assert (_field[player][k]);
       if (!seen[k])
       {
-        open.push (k);
+        _open[pos++] = k;
         seen[k] = true;
         ++s;
       }
 
-      while (!open.empty())
+      while (pos > 0)
       {
-        int const f {open.top()}; open.pop();
+        int const f {_open[--pos]};
         for (int k {0}; k < _ns.count (f); ++k)
         {
           int const n (_ns (f, k));
           if (!seen[n] && _field[player][n])
           {
-            open.push (n);
+            _open[pos++] = n;
             seen[n] = true;
             ++s;
           }
@@ -580,6 +580,7 @@ namespace
     int _free;
     std::array<std::uint32_t, 2> _val;
     storage& _storage;
+    mutable std::vector<int> _open;
   };
 }
 
