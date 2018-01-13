@@ -300,14 +300,14 @@ namespace
     std::uint32_t _;
   };
 
+#define TAKEN(p,k) ((_val[p] & (1 << (k))) > 0)
+#define EMPTY(k) (!TAKEN (0, k) && !TAKEN (1, k))
+
   class board
   {
   public:
     board (neighbours ns, int k, storage& storage)
       : _ns (std::move (ns))
-      , _field { std::vector<bool> (_ns.count(), false)
-               , std::vector<bool> (_ns.count(), false)
-               }
       , _score {1, 0}
       , _player (0)
       , _available (2)
@@ -318,7 +318,6 @@ namespace
     {
       assert (k < _ns.count());
 
-      _field[_player][k] = true;
       _val[_player] |= (1 << k);
       _player = 1 - _player;
     }
@@ -327,7 +326,8 @@ namespace
       int s {0};
       int pos {0};
 
-      assert (_field[player][k]);
+      assert (TAKEN (player, k));
+
       if (!memory.seen (k))
       {
         _open[pos++] = k;
@@ -341,7 +341,7 @@ namespace
         for (int k {0}; k < _ns.count (f); ++k)
         {
           int const n (_ns (f, k));
-          if (!memory.seen (n) && _field[player][n])
+          if (!memory.seen (n) && TAKEN (player, n))
           {
             _open[pos++] = n;
             memory.see (n);
@@ -379,13 +379,13 @@ namespace
 
         for (int f {0}; f < _ns.count(); ++f)
         {
-          assert (_field[0][f] || _field[1][f]);
+          assert (TAKEN (0, f) || TAKEN (1, f));
 
-          if (_field[0][f] && !memories[0].seen (f))
+          if (TAKEN (0, f) && !memories[0].seen (f))
           {
             sizes[0].emplace_back (size_of_component (memories[0], 0, f));
           }
-          else if (_field[1][f] && !memories[1].seen (f))
+          else if (TAKEN (1, f) && !memories[1].seen (f))
           {
             sizes[1].emplace_back (size_of_component (memories[1], 1, f));
           }
@@ -448,19 +448,16 @@ namespace
       case 3:
         for (int x {0}; x + 2 < _ns.count(); ++x)
         {
-          if (!_field[_player][x] && !_field[1 - _player][x])
+          if (EMPTY (x))
           {
             for (int y {x + 1}; y + 1 < _ns.count(); ++y)
             {
-              if (!_field[_player][y] && !_field[1 - _player][y])
+              if (EMPTY (y))
               {
                 for (int z {y + 1}; z < _ns.count(); ++z)
                 {
-                  if (!_field[_player][z] && !_field[1 - _player][z])
+                  if (EMPTY (z))
                   {
-                    _field[_player][x] = true;
-                    _field[_player][y] = true;
-                    _field[_player][z] = true;
                     _val[_player] |= (1 << x);
                     _val[_player] |= (1 << y);
                     _val[_player] |= (1 << z);
@@ -484,9 +481,6 @@ namespace
                     _score[_player] = score;
                     _available = available;
                     _free += 3;
-                    _field[_player][x] = false;
-                    _field[_player][y] = false;
-                    _field[_player][z] = false;
                     _val[_player] &= ~(1 << x);
                     _val[_player] &= ~(1 << y);
                     _val[_player] &= ~(1 << z);
@@ -506,14 +500,12 @@ namespace
       case 2:
         for (int x {0}; x + 1 < _ns.count(); ++x)
         {
-          if (!_field[_player][x] && !_field[1 - _player][x])
+          if (EMPTY (x))
           {
             for (int y {x + 1}; y < _ns.count(); ++y)
             {
-              if (!_field[_player][y] && !_field[1 - _player][y])
+              if (EMPTY (y))
               {
-                _field[_player][x] = true;
-                _field[_player][y] = true;
                 _val[_player] |= (1 << x);
                 _val[_player] |= (1 << y);
                 _free -= 2;
@@ -534,8 +526,6 @@ namespace
                 _score[_player] = score;
                 _available = available;
                 _free += 2;
-                _field[_player][x] = false;
-                _field[_player][y] = false;
                 _val[_player] &= ~(1 << x);
                 _val[_player] &= ~(1 << y);
                 if (child == _player)
@@ -552,9 +542,8 @@ namespace
       case 1:
         for (int x {0}; x < _ns.count(); ++x)
         {
-          if (!_field[_player][x] && !_field[1 - _player][x])
+          if (EMPTY (x))
           {
-            _field[_player][x] = true;
             _val[_player] |= (1 << x);
             _free -= 1;
             memory m {_ns.count()};
@@ -571,7 +560,6 @@ namespace
             _score[_player] = score;
             _available = available;
             _free += 1;
-            _field[_player][x] = false;
             _val[_player] &= ~(1 << x);
             if (child == _player)
             {
@@ -590,7 +578,6 @@ namespace
     }
   private:
     neighbours _ns;
-    std::array<std::vector<bool>, 2> _field;
     std::array<int, 2> _score;
     int _player;
     int _available;
