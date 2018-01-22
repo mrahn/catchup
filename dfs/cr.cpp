@@ -200,8 +200,6 @@ namespace
   unsigned long count_hits {0};
   unsigned long count_gets {0};
   unsigned long count_leafs {0};
-  unsigned long count_score_other {0};
-  unsigned long count_score_player {0};
 
   // class entry
   // {
@@ -280,34 +278,45 @@ namespace
     }
   };
 
-#ifndef NDEBUG
-#define NAME(...) __VA_ARGS__
-#else
-#define NAME(...)
-#endif
-
-  class memory
+  class free
   {
   public:
-    memory (int NAME (k))
-      : _ {0}
+    free (int n)
+      : _free (n)
+      , _next (n + 2, 1)
+      , _prev (n + 2, 1)
+    {}
+    int count() const
     {
-      assert (k <= 32);
+      return _free;
     }
-    bool seen (int k) const
+    void put (int k)
     {
-      return (_ & (1 << k)) > 0;
+      _next[k + 1 - _prev[k + 1]] += _next[k + 1];
+      _prev[k + 1 + _next[k + 1]] += _prev[k + 1];
+      --_free;
     }
-    void see (int k)
+    void unput (int k)
     {
-      _ |= (1 << k);
+      _next[k + 1 - _prev[k + 1]] -= _next[k + 1];
+      _prev[k + 1 + _next[k + 1]] -= _prev[k + 1];
+      ++_free;
+    }
+    int first() const
+    {
+      return _next[0] - 1;
+    }
+    int next (int k) const
+    {
+      return k + _next[k + 1];
     }
   private:
-    std::uint32_t _;
+    int _free;
+    std::vector<int> _next;
+    std::vector<int> _prev;
   };
 
 #define TAKEN(p,k) ((_val[p] & (1 << (k))) > 0)
-#define EMPTY(k) (!TAKEN (0, k) && !TAKEN (1, k))
 
   class board
   {
@@ -317,28 +326,30 @@ namespace
       , _score {1, 0}
       , _player (0)
       , _available (2)
-      , _free (_ns.count() - 1)
+      , _free (_ns.count())
       , _val {0, 0}
       , _storage (storage)
       , _open (_ns.count())
+      , _sizes {std::vector<int> (_ns.count()), std::vector<int> (_ns.count())}
     {
       assert (k < _ns.count());
       assert (k <= 32);
 
       _val[_player] |= (1 << k);
       _player = 1 - _player;
+      _free.put (k);
     }
-    int size_of_component (memory& memory, int player, int k) const
+    int size_of_component (int player, int k)
     {
       int s {0};
       int pos {0};
 
       assert (TAKEN (player, k));
 
-      if (!memory.seen (k))
+      if (!(_memory & (1 << k)))
       {
         _open[pos++] = k;
-        memory.see (k);
+        _memory |= (1 << k);
         ++s;
       }
 
@@ -348,10 +359,10 @@ namespace
         for (int k {0}; k < _ns.count (f); ++k)
         {
           int const n (_ns (f, k));
-          if (!memory.seen (n) && TAKEN (player, n))
+          if (TAKEN (player, n) && !(_memory & (1 << n)))
           {
             _open[pos++] = n;
-            memory.see (n);
+            _memory |= (1 << n);
             ++s;
           }
         }
@@ -363,68 +374,57 @@ namespace
     {
       ++count_calls_to_winner;
 
-      if (_score[1 - _player] > _free + _score[_player])
-      {
-        ++count_score_other;
-
-        return 1 - _player;
-      }
-
-      if (_score[_player] > _free + _score[1 - _player])
-      {
-        ++count_score_player;
-
-        return _player;
-      }
-
-      if (_free == 0)
+      if (_free.count() == 0)
       {
         ++count_leafs;
 
-        std::array<std::vector<int>, 2> sizes;
-        memory memory {_ns.count()};
+        std::array<int, 2> pos {0, 0};
+        _memory = 0;
 
         for (int f {0}; f < _ns.count(); ++f)
         {
           assert (TAKEN (0, f) || TAKEN (1, f));
 
-          if (TAKEN (0, f) && !memory.seen (f))
+          if (!(_memory & (1 << f)))
           {
-            sizes[0].emplace_back (size_of_component (memory, 0, f));
-          }
-          else if (TAKEN (1, f) && !memory.seen (f))
-          {
-            sizes[1].emplace_back (size_of_component (memory, 1, f));
+            if (TAKEN (0, f))
+            {
+              _sizes[0][pos[0]++] = size_of_component (0, f);
+            }
+            else
+            {
+              _sizes[1][pos[1]++] = size_of_component (1, f);
+            }
           }
         }
 
-        std::sort (sizes[0].begin(), sizes[0].end(), std::greater<int>());
-        std::sort (sizes[1].begin(), sizes[1].end(), std::greater<int>());
+        std::sort (_sizes[0].data(), _sizes[0].data() + pos[0], std::greater<int>());
+        std::sort (_sizes[1].data(), _sizes[1].data() + pos[1], std::greater<int>());
 
-        decltype (sizes[0].size()) p {0};
+        int p {0};
 
-        while (p < sizes[0].size() && p < sizes[1].size())
+        while (p < pos[0] && p < pos[1])
         {
-          if (sizes[0][p] > sizes[1][p])
+          if (_sizes[0][p] > _sizes[1][p])
           {
             return 0;
           }
-          if (sizes[0][p] < sizes[1][p])
+          if (_sizes[0][p] < _sizes[1][p])
           {
             return 1;
           }
           ++p;
         }
 
-        if (p == sizes[0].size())
+        if (p == pos[0])
         {
-          assert (p < sizes[1].size());
+          assert (p < pos[1]);
 
           return 1;
         }
 
-        assert (p == sizes[1].size());
-        assert (p < sizes[0].size());
+        assert (p == pos[1]);
+        assert (p < pos[0]);
 
         return 0;
       }
@@ -450,130 +450,115 @@ namespace
       int const available (_available);
       int const score (_score[_player]);
 
-      switch (_available)
+      switch (available)
       {
       case 3:
-        for (int x {0}; x + 2 < _ns.count(); ++x)
+        for (int x {_free.first()}; x < _ns.count(); x = _free.next (x))
         {
-          if (EMPTY (x))
+          for (int y {_free.next (x)}; y < _ns.count(); y = _free.next (y))
           {
-            for (int y {x + 1}; y + 1 < _ns.count(); ++y)
+            for (int z {_free.next (y)}; z < _ns.count(); z = _free.next (z))
             {
-              if (EMPTY (y))
+              int v {(1 << x) | (1 << y) | (1 << z)};
+              _val[_player] |= v;
+              _free.put (x);
+              _free.put (y);
+              _free.put (z);
+              _memory = 0;
+              int const c (std::max ( size_of_component (_player, x)
+                          ,std::max ( size_of_component (_player, y)
+                                    , size_of_component (_player, z)
+                                    )
+                                    )
+                          );
+              if (c > _score[_player])
               {
-                for (int z {y + 1}; z < _ns.count(); ++z)
-                {
-                  if (EMPTY (z))
-                  {
-                    _val[_player] |= (1 << x);
-                    _val[_player] |= (1 << y);
-                    _val[_player] |= (1 << z);
-                    _free -= 3;
-                    memory m {_ns.count()};
-                    int const c (std::max ( size_of_component (m, _player, x)
-                                ,std::max ( size_of_component (m, _player, y)
-                                          , size_of_component (m, _player, z)
-                                          )
-                                          )
-                                );
-                    if (c > _score[_player])
-                    {
-                      _score[_player] = c;
-                      _available =
-                        std::min (_free, (c > 1 && c >= _score[1 - _player]) ? 3 : 2);
-                    }
-                    _player = 1 - _player;
-                    int const child (winner());
-                    _player = 1 - _player;
-                    _score[_player] = score;
-                    _available = available;
-                    _free += 3;
-                    _val[_player] &= ~(1 << x);
-                    _val[_player] &= ~(1 << y);
-                    _val[_player] &= ~(1 << z);
-                    if (child == _player)
-                    {
-                      _storage.put (key, _available, _player, _player);
+                _score[_player] = c;
+                _available =
+                  std::min (_free.count(), (c > 1 && c >= _score[1 - _player]) ? 3 : 2);
+              }
+              _player = 1 - _player;
+              int const child (winner());
+              _player = 1 - _player;
+              _score[_player] = score;
+              _available = available;
+              _free.unput (z);
+              _free.unput (y);
+              _free.unput (x);
+              _val[_player] &= ~v;
+              if (child == _player)
+              {
+                _storage.put (key, _available, _player, _player);
 
-                      return _player;
-                    }
-                  }
-                }
+                return _player;
               }
             }
           }
         }
         [[fallthrough]];
       case 2:
-        for (int x {0}; x + 1 < _ns.count(); ++x)
+        for (int x {_free.first()}; x < _ns.count(); x = _free.next (x))
         {
-          if (EMPTY (x))
-          {
-            for (int y {x + 1}; y < _ns.count(); ++y)
-            {
-              if (EMPTY (y))
-              {
-                _val[_player] |= (1 << x);
-                _val[_player] |= (1 << y);
-                _free -= 2;
-                memory m {_ns.count()};
-                int const c (std::max ( size_of_component (m, _player, x)
-                                      , size_of_component (m, _player, y)
-                                      )
-                            );
-                if (c > _score[_player])
-                {
-                  _score[_player] = c;
-                  _available =
-                    std::min (_free, (c > 1 && c >= _score[1 - _player]) ? 3 : 2);
-                }
-                _player = 1 - _player;
-                int const child (winner());
-                _player = 1 - _player;
-                _score[_player] = score;
-                _available = available;
-                _free += 2;
-                _val[_player] &= ~(1 << x);
-                _val[_player] &= ~(1 << y);
-                if (child == _player)
-                {
-                  _storage.put (key, _available, _player, _player);
-
-                  return _player;
-                }
-              }
-            }
-          }
-        }
-        [[fallthrough]];
-      case 1:
-        for (int x {0}; x < _ns.count(); ++x)
-        {
-          if (EMPTY (x))
+          for (int y {_free.next (x)}; y < _ns.count(); y = _free.next (y))
           {
             _val[_player] |= (1 << x);
-            _free -= 1;
-            memory m {_ns.count()};
-            int const c (size_of_component (m, _player, x));
+            _val[_player] |= (1 << y);
+            _free.put (x);
+            _free.put (y);
+            _memory = 0;
+            int const c (std::max ( size_of_component (_player, x)
+                                  , size_of_component (_player, y)
+                                  )
+                        );
             if (c > _score[_player])
             {
               _score[_player] = c;
               _available =
-                std::min (_free, (c > 1 && c >= _score[1 - _player]) ? 3 : 2);
+                std::min (_free.count(), (c > 1 && c >= _score[1 - _player]) ? 3 : 2);
             }
             _player = 1 - _player;
             int const child (winner());
             _player = 1 - _player;
             _score[_player] = score;
             _available = available;
-            _free += 1;
+            _free.unput (y);
+            _free.unput (x);
             _val[_player] &= ~(1 << x);
+            _val[_player] &= ~(1 << y);
             if (child == _player)
             {
               _storage.put (key, _available, _player, _player);
 
               return _player;
             }
+          }
+        }
+        [[fallthrough]];
+      case 1:
+        for (int x {_free.first()}; x < _ns.count(); x = _free.next (x))
+        {
+          _val[_player] |= (1 << x);
+          _free.put (x);
+          _memory = 0;
+          int const c (size_of_component (_player, x));
+          if (c > _score[_player])
+          {
+            _score[_player] = c;
+            _available =
+              std::min (_free.count(), (c > 1 && c >= _score[1 - _player]) ? 3 : 2);
+          }
+          _player = 1 - _player;
+          int const child (winner());
+          _player = 1 - _player;
+          _score[_player] = score;
+          _available = available;
+          _free.unput (x);
+          _val[_player] &= ~(1 << x);
+          if (child == _player)
+          {
+            _storage.put (key, _available, _player, _player);
+
+            return _player;
           }
         }
         _storage.put (key, _available, _player, 1 - _player);
@@ -588,10 +573,12 @@ namespace
     std::array<int, 2> _score;
     int _player;
     int _available;
-    int _free;
+    free _free;
     std::array<std::uint32_t, 2> _val;
     storage& _storage;
-    mutable std::vector<int> _open;
+    std::vector<int> _open;
+    std::array<std::vector<int>, 2> _sizes;
+    std::uint32_t _memory;
   };
 }
 
@@ -614,7 +601,6 @@ int main()
       std::cout << shift (f)
                 << " [shape=\"circle\",height=0.25,label=\""
         //                << (f == 0 ? std::to_string (s) : "")
-                << std::to_string (shift (f))
                 << "\""
                 << ( board {neighbours, f, storage}.winner() == 0
                    ? ",style=\"filled\""
@@ -647,8 +633,6 @@ int main()
   std::cerr << "puts " << count_puts
             << " gets " << count_gets
             << " hits " << count_hits
-            << " score_other " << count_score_other
-            << " score_player " << count_score_player
             << " leafs " << count_leafs
             << std::endl;
 
