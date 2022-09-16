@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <functional>
 #include <iterator>
+#include <type_traits>
 
 namespace
 {
@@ -11,11 +12,31 @@ namespace
   {
     template<std::size_t N> using Fields = std::array<Field, N>;
 
+    // Ensures: All fields are available, O(Size)
     constexpr explicit FreeField() noexcept;
 
-    constexpr auto size() const noexcept -> std::size_t;
-    constexpr auto put (Field) noexcept -> void;
-    constexpr auto unput() noexcept -> Field;
+    // returns the numnber of available fields, between 0 and Size, O(1)
+    [[nodiscard]] constexpr auto available() const noexcept -> std::size_t;
+
+    // unputs on scope exit, O(1)
+    struct [[nodiscard]] ScopedPut
+    {
+      ~ScopedPut() noexcept;
+      ScopedPut (ScopedPut const&) = delete;
+      ScopedPut& operator= (ScopedPut const&) = delete;
+      ScopedPut (ScopedPut&& other) noexcept;
+      ScopedPut& operator= (ScopedPut&& other) noexcept;
+
+    private:
+      template<std::unsigned_integral, std::size_t> friend struct FreeField;
+      constexpr explicit ScopedPut (FreeField*, Field) noexcept;
+
+      FreeField* _free_field {nullptr};
+      Field _field{};
+    };
+
+    // put a stone on Field field, O(1)
+    [[nodiscard]] constexpr auto put (Field field) noexcept -> ScopedPut;
 
     struct iterator
     {
@@ -50,19 +71,25 @@ namespace
     static_assert (std::is_swappable_v<iterator>);
     static_assert (std::equality_comparable<iterator>);
 
-    constexpr auto begin() const noexcept -> iterator;
-    constexpr auto end() const noexcept-> iterator;
+    [[nodiscard]] constexpr auto begin() const noexcept -> iterator;
+    [[nodiscard]] constexpr auto end() const noexcept-> iterator;
 
   private:
     Fields<Size> _put;
     Fields<Size + 1> _next;
     Fields<Size + 1> _prev;
     Field _used {0};
+
+    friend struct ScopedPut;
+
+    constexpr auto do_put (Field) noexcept -> void; // O(1)
+    constexpr auto do_unput() noexcept -> Field;    // O(1)
   };
 }
 
 #include <cassert>
 #include <memory>
+#include <utility>
 
 namespace
 {
@@ -74,13 +101,19 @@ namespace
   }
 
   template<std::unsigned_integral Field, std::size_t Size>
-    constexpr std::size_t FreeField<Field, Size>::size() const noexcept
+    constexpr std::size_t FreeField<Field, Size>::available() const noexcept
   {
     return Size - _used;
   }
 
   template<std::unsigned_integral Field, std::size_t Size>
-    constexpr auto FreeField<Field, Size>::put (Field f) noexcept -> void
+    constexpr auto FreeField<Field, Size>::put (Field f) noexcept -> ScopedPut
+  {
+    return ScopedPut {this, f};
+  }
+
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr auto FreeField<Field, Size>::do_put (Field f) noexcept -> void
   {
     assert (_used < Size);
     assert (f < Size);
@@ -100,7 +133,7 @@ namespace
   }
 
   template<std::unsigned_integral Field, std::size_t Size>
-    constexpr auto FreeField<Field, Size>::unput() noexcept -> Field
+    constexpr auto FreeField<Field, Size>::do_unput() noexcept -> Field
   {
     assert (_used > 0);
     assert (_used <= Size);
@@ -189,13 +222,49 @@ namespace
   template<std::unsigned_integral Field, std::size_t Size>
     constexpr auto FreeField<Field, Size>::begin() const noexcept -> iterator
   {
-    return {_next, size()};
+    return {_next, available()};
   }
 
   template<std::unsigned_integral Field, std::size_t Size>
     constexpr auto FreeField<Field, Size>::end() const noexcept -> iterator
   {
     return {_next, 0};
+  }
+
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr FreeField<Field, Size>::ScopedPut::ScopedPut
+      ( FreeField<Field, Size>* free_field
+      , Field field
+      ) noexcept
+        : _free_field {free_field}
+        , _field {field}
+  {
+    _free_field->do_put (_field);
+  }
+
+  template<std::unsigned_integral Field, std::size_t Size>
+    FreeField<Field, Size>::ScopedPut::~ScopedPut() noexcept
+  {
+    if (_free_field != nullptr)
+    {
+      auto const resurrected {_free_field->do_unput()};
+
+      assert (resurrected == _field);
+
+      std::ignore = resurrected;
+    }
+  }
+  template<std::unsigned_integral Field, std::size_t Size>
+    FreeField<Field, Size>::ScopedPut::ScopedPut (ScopedPut&& other) noexcept
+      : _free_field {std::exchange (other._free_field, _free_field)}
+      , _field {std::exchange (other._field, _field)}
+  {}
+  template<std::unsigned_integral Field, std::size_t Size>
+    typename FreeField<Field, Size>::ScopedPut&
+      FreeField<Field, Size>::ScopedPut::operator= (ScopedPut&& other) noexcept
+  {
+    _free_field = std::exchange (other._free_field, _free_field);
+    _field = std::exchange (other._field, _field);
   }
 }
 
@@ -211,7 +280,7 @@ namespace
     {}
     std::ostream& operator() (std::ostream& os) const
     {
-      os << _ff.size() << ':';
+      os << _ff.available() << ':';
 
       for (auto const& f : _ff)
       {
@@ -229,6 +298,8 @@ namespace
   }
 }
 
+#include <stack>
+
 int main()
 {
   using field = unsigned short;
@@ -238,41 +309,37 @@ int main()
 
   std::cout << print<field, size> (ff) << '\n';
 
-  ff.put (4);
+  {
+    auto const p4 {ff.put (4)};
+
+    std::cout << print<field, size> (ff) << '\n';
+
+    {
+      auto const p1 {ff.put (1)};
+
+      std::cout << print<field, size> (ff) << '\n';
+    }
+
+    std::cout << print<field, size> (ff) << '\n';
+  }
 
   std::cout << print<field, size> (ff) << '\n';
 
-  ff.put (1);
+  {
+    std::stack<decltype (ff.put (0))> puts;
 
-  std::cout << print<field, size> (ff) << '\n';
+    for (auto f : {4,2,1,0,5,6,3})
+    {
+      puts.push (ff.put (static_cast<field> (f)));
+      std::cout << print<field, size> (ff) << '\n';
+    }
 
-  ff.unput();
-
-  std::cout << print<field, size> (ff) << '\n';
-
-  ff.unput();
-
-  std::cout << print<field, size> (ff) << '\n';
-
-  ff.put (4);
-  ff.put (2);
-  ff.put (1);
-  ff.put (0);
-  ff.put (5);
-  ff.put (6);
-  ff.put (3);
-
-  std::cout << print<field, size> (ff) << '\n';
-
-  ff.unput();
-  ff.unput();
-  ff.unput();
-  ff.unput();
-  ff.unput();
-  ff.unput();
-  ff.unput();
-
-  std::cout << print<field, size> (ff) << '\n';
+    while (!puts.empty())
+    {
+      puts.pop();
+      std::cout << print<field, size> (ff) << '\n';
+    }
+  }
 
   std::cout << sizeof (ff) << '\n';
 
