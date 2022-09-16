@@ -1,143 +1,199 @@
-#include <memory>
-#include <type_traits>
+#include <array>
+#include <concepts>
+#include <cstdint>
+#include <functional>
+#include <iterator>
 
 namespace
 {
-  template<typename Field, std::size_t Size>
-    struct freefield
+  template<std::unsigned_integral Field, std::size_t Size>
+    struct FreeField
   {
-    freefield (freefield const&) = delete;
-    freefield (freefield&&) = delete;
-    freefield& operator= (freefield const&) = delete;
-    freefield& operator= (freefield&&) = delete;
-    ~freefield() = default;
+    template<std::size_t N> using Fields = std::array<Field, N>;
 
-    using field_type
-      = typename std::enable_if<std::is_unsigned<Field>::value, Field>::type;
+    constexpr explicit FreeField() noexcept;
 
-    freefield();
-
-    std::size_t size() const;
-    void put (field_type);
-    void unput();
+    constexpr auto size() const noexcept -> std::size_t;
+    constexpr auto put (Field) noexcept -> void;
+    constexpr auto unput() noexcept -> Field;
 
     struct iterator
     {
-      void operator++();
-      bool operator!= (iterator const&);
-      field_type operator*() const;
+      using value_type = Field;
+      using difference_type = std::ptrdiff_t;
+      using reference = value_type const&;
+      using pointer = value_type const*;
+      using iterator_category = std::input_iterator_tag;
+
+      constexpr auto operator++() noexcept -> iterator&;
+      constexpr auto operator++(int) noexcept -> iterator&;
+      constexpr auto operator*() const noexcept -> reference;
+      constexpr auto operator->() const noexcept -> pointer;
+
+      constexpr auto operator== (iterator const& other) const noexcept -> bool;
+      constexpr auto operator!= (iterator const& other) const noexcept -> bool;
 
     private:
-      friend struct freefield<Field, Size>;
-      iterator (field_type const*, std::size_t);
+      friend struct FreeField<Field, Size>;
+      constexpr iterator
+        ( std::reference_wrapper<Fields<Size + 1> const>
+        , std::size_t
+        ) noexcept;
 
-      field_type const* _next;
-      field_type _f;
+      std::reference_wrapper<Fields<Size + 1> const> _next;
       std::size_t _size;
+      Field _f;
     };
-    iterator begin() const;
-    iterator end() const;
+    static_assert (std::is_copy_constructible_v<iterator>);
+    static_assert (std::is_copy_assignable_v<iterator>);
+    static_assert (std::is_destructible_v<iterator>);
+    static_assert (std::is_swappable_v<iterator>);
+    static_assert (std::equality_comparable<iterator>);
+
+    constexpr auto begin() const noexcept -> iterator;
+    constexpr auto end() const noexcept-> iterator;
 
   private:
-    std::unique_ptr<field_type> _dat;
-    field_type* _put;
-    field_type* _next;
-    field_type* _prev;
-    std::size_t _used;
+    Fields<Size> _put;
+    Fields<Size + 1> _next;
+    Fields<Size + 1> _prev;
+    Field _used {0};
   };
 }
 
-#include <algorithm>
 #include <cassert>
+#include <memory>
 
 namespace
 {
-  // |---------------||---------------|--------------||
-  // ^               ^^               ^              :^
-  // 0               :Size + 1        2 * Size + 1   :3 * Size + 2
-  // :               ::               :              ::
-  // |...............):               :              ::  put
-  //                 #|---------------)              ::  first + next
-  //                                  |--------------)#  prev + last
-
-  template<typename Field, std::size_t Size>
-    freefield<Field, Size>::freefield()
-      : _dat (new field_type[3 * Size + 2])
-      , _put (_dat.get())
-      , _next (_dat.get() + Size + 1)
-      , _prev (_dat.get() + 2 * Size + 1)
-      , _used (0)
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr FreeField<Field, Size>::FreeField() noexcept
   {
-    std::fill (_dat.get() + Size, _dat.get() + 3 * Size + 2, 1);
+    _next.fill (1);
+    _prev.fill (1);
   }
 
-  template<typename Field, std::size_t Size>
-    std::size_t freefield<Field, Size>::size() const
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr std::size_t FreeField<Field, Size>::size() const noexcept
   {
     return Size - _used;
   }
 
-  template<typename Field, std::size_t Size>
-    void freefield<Field, Size>::put (field_type f)
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr auto FreeField<Field, Size>::put (Field f) noexcept -> void
   {
+    assert (_used < Size);
     assert (f < Size);
 
-    _next[f - _prev[f]] += _next[f];
-    _prev[f + _next[f]] += _prev[f];
+    auto const p {_prev[f + 0]};
+    auto const n {_next[f + 1]};
+
+    assert (p > 0);
+    assert (f + 1 >= p);
+    assert (n > 0);
+    assert (f + n <= Size);
+
+    _next[f + 1 - p] += n;
+    _prev[f + 0 + n] += p;
 
     _put[_used++] = f;
   }
 
-  template<typename Field, std::size_t Size>
-    void freefield<Field, Size>::unput()
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr auto FreeField<Field, Size>::unput() noexcept -> Field
   {
     assert (_used > 0);
+    assert (_used <= Size);
 
-    field_type const f (_put[--_used]);
+    auto const f {_put[--_used]};
 
-    _next[f - _prev[f]] -= _next[f];
-    _prev[f + _next[f]] -= _prev[f];
+    assert (f < Size);
+
+    auto const p {_prev[f + 0]};
+    auto const n {_next[f + 1]};
+
+    assert (p > 0);
+    assert (f + 1 >= p);
+    assert (n > 0);
+    assert (f + n <= Size);
+
+    _next[f + 1 - p] -= n;
+    _prev[f + 0 + n] -= p;
+
+    return f;
   }
 
-  template<typename Field, std::size_t Size>
-    void freefield<Field, Size>::iterator::operator++()
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr auto FreeField<Field, Size>::iterator::operator++() noexcept
+      -> iterator&
   {
-    _f += _next[_f];
+    _f += _next.get()[_f + 1];
+
     --_size;
+
+    return *this;
+  }
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr auto FreeField<Field, Size>::iterator::operator++(int) noexcept
+      -> iterator&
+  {
+   decltype (*this) old {*this};
+
+    --*this;
+
+    return old;
   }
 
-  template<typename Field, std::size_t Size>
-    bool freefield<Field, Size>::iterator::operator!= (iterator const& other)
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr auto FreeField<Field, Size>::iterator::operator==
+      ( iterator const& other
+      ) const noexcept -> bool
+  {
+    return _size == other._size;
+  }
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr auto FreeField<Field, Size>::iterator::operator!=
+      ( iterator const& other
+      ) const noexcept -> bool
   {
     return _size != other._size;
   }
 
-  template<typename Field, std::size_t Size>
-    typename freefield<Field, Size>::field_type
-      freefield<Field, Size>::iterator::operator*() const
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr auto FreeField<Field, Size>::iterator::operator*() const noexcept
+      -> reference
   {
     return _f;
   }
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr auto FreeField<Field, Size>::iterator::operator->() const noexcept
+      -> pointer
+  {
+    return std::addressof (_f);
+  }
 
-  template<typename Field, std::size_t Size>
-    freefield<Field, Size>::iterator::iterator ( field_type const* next
-                                               , std::size_t size
-                                               )
-      : _next (next)
-      , _f (*(next - 1) - 1)
-      , _size (size)
-  {}
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr FreeField<Field, Size>::iterator::iterator
+      ( std::reference_wrapper<Fields<Size + 1> const> next
+      , std::size_t size
+      ) noexcept
+        : _next {next}
+        , _size {size}
+        , _f {_next.get()[0]}
+  {
+    assert (_f > 0);
 
-  template<typename Field, std::size_t Size>
-    typename freefield<Field, Size>::iterator
-      freefield<Field, Size>::begin() const
+    --_f;
+  }
+
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr auto FreeField<Field, Size>::begin() const noexcept -> iterator
   {
     return {_next, size()};
   }
 
-  template<typename Field, std::size_t Size>
-    typename freefield<Field, Size>::iterator
-      freefield<Field, Size>::end() const
+  template<std::unsigned_integral Field, std::size_t Size>
+    constexpr auto FreeField<Field, Size>::end() const noexcept -> iterator
   {
     return {_next, 0};
   }
@@ -147,10 +203,10 @@ namespace
 
 namespace
 {
-  template<typename Field, std::size_t Size>
+  template<std::unsigned_integral Field, std::size_t Size>
     struct print
   {
-    print (freefield<Field, Size> const& ff)
+    print (FreeField<Field, Size> const& ff)
       : _ff (ff)
     {}
     std::ostream& operator() (std::ostream& os) const
@@ -164,9 +220,9 @@ namespace
 
       return os;
     }
-    freefield<Field, Size> const& _ff;
+    FreeField<Field, Size> const& _ff;
   };
-  template<typename Field, std::size_t Size>
+  template<std::unsigned_integral Field, std::size_t Size>
     std::ostream& operator<< (std::ostream& os, print<Field, Size> const& p)
   {
     return p (os);
@@ -178,7 +234,7 @@ int main()
   using field = unsigned short;
   std::size_t const size (7);
 
-  freefield<field, size> ff;
+  FreeField<field, size> ff;
 
   std::cout << print<field, size> (ff) << '\n';
 
